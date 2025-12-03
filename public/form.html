@@ -1,118 +1,12 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>填寫預約資料</title>
-
-<!-- LIFF SDK -->
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-<style>
-  body {
-    margin: 0;
-    font-family: "Noto Sans TC", sans-serif;
-    background: #f5f5f5;
-  }
-
-  .container {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 16px;
-  }
-
-  .title {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 12px;
-  }
-
-  .info-box, .form-box {
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    border: 1px solid #e6e6e6;
-    margin-bottom: 16px;
-  }
-
-  .label {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 4px;
-  }
-
-  .value {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-
-  input, textarea {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    font-size: 16px;
-    margin-bottom: 14px;
-    box-sizing: border-box;
-  }
-
-  textarea { height: 100px; resize: vertical; }
-
-  .btn {
-    width: 100%;
-    padding: 14px;
-    border-radius: 10px;
-    background: #1a73e8;
-    color: #fff;
-    font-size: 17px;
-    border: none;
-    cursor: pointer;
-  }
-</style>
-
-</head>
-
-<body>
-
-<div class="container">
-
-  <div class="title">填寫預約資料</div>
-
-  <div class="form-box">
-
-  <label class="label">姓名（必填）</label>
-  <input type="text" id="name" required />
-
-  <label class="label">手機號碼（必填）</label>
-  <input type="tel" id="phone" maxlength="10" placeholder="0912345678" required />
-
-  <label class="label">大人人數</label>
-  <input type="number" id="adult" min="1" value="1" />
-
-  <label class="label">小孩人數</label>
-  <input type="number" id="child" min="0" value="0" />
-
-  <label class="label">是否攜帶寵物</label>
-  <select id="petOption" onchange="togglePetCount()">
-    <option value="no">否</option>
-    <option value="yes">是</option>
-  </select>
-
-  <div id="petCountBox" style="display:none; margin-top:10px;">
-    <label class="label">寵物數量</label>
-    <input type="number" id="petCount" min="1" value="1" />
-  </div>
-
-  <label class="label">備註（選填）</label>
-  <textarea id="note"></textarea>
-
-  <input type="hidden" id="line_uid" />
-
-  <button class="btn" onclick="submitBooking()">送出預約</button>
-</div>
-
 <script>
+const API = "https://script.google.com/macros/s/AKfycbx72JGTk3CuJe-z4AFdFm6N1OPJO0aIXq0fgjHY0DN1lCq7iHUtgEZu-YB7fiPP1t2J/exec";
+
+const params = new URLSearchParams(location.search);
+const roomId = params.get("roomId");
+const date = params.get("date");
+const nights = params.get("nights");
+const checkout = params.get("checkout");
+
 function togglePetCount() {
   const isPet = document.getElementById("petOption").value;
   document.getElementById("petCountBox").style.display =
@@ -141,13 +35,18 @@ function submitBooking() {
     return;
   }
 
-  fetch("YOUR_API_ENDPOINT", {
+  fetch(`${API}?action=createOrder`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   })
-  .then(() => {
-    window.location.href = "done.html";
+  .then(res => res.json())
+  .then(json => {
+    if (json.success) {
+      window.location.href = "done.html";
+    } else {
+      alert("預約失敗：" + json.message);
+    }
   })
   .catch(err => {
     alert("預約送出失敗，請稍後再試！");
@@ -155,7 +54,3 @@ function submitBooking() {
   });
 }
 </script>
-
-
-</body>
-</html>
