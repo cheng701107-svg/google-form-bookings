@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>管理後台</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="style.css">
+<script src="api.js"></script>
+
+</head>
+
+<body>
+
+<div class="header">預約後台管理</div>
+
+<div class="container">
+
+  <!-- 搜尋列 -->
+  <div class="card">
+    <div class="card-title">搜尋訂單</div>
+
+    <div class="field-group">
+      <label>姓名</label>
+      <input type="text" id="searchName" placeholder="輸入姓名">
+    </div>
+
+    <div class="field-group">
+      <label>電話</label>
+      <input type="text" id="searchPhone" placeholder="輸入手機">
+    </div>
+
+    <div class="field-group">
+      <label>入住日期</label>
+      <input type="date" id="searchDate">
+    </div>
+
+    <button class="btn" onclick="loadBookings()">搜尋</button>
+  </div>
+
+  <!-- 訂單列表 -->
+  <div class="card">
+    <div class="card-title">訂單列表</div>
+
+    <table class="table" id="bookingTable">
+      <thead>
+        <tr>
+          <th>訂單編號</th>
+          <th>姓名</th>
+          <th>電話</th>
+          <th>房型</th>
+          <th>入住</th>
+          <th>退房</th>
+          <th>金額</th>
+          <th>狀態</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="9" style="text-align:center;">載入中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- 浮動新增按鈕（可對業主販售升級功能） -->
+<div class="fab" onclick="alert('預留：新增訂單功能可作為付費升級項目！')">
+  ＋
+</div>
+
+<script>
+// 載入訂單
+async function loadBookings() {
+  const name  = document.getElementById("searchName").value.trim();
+  const phone = document.getElementById("searchPhone").value.trim();
+  const date  = document.getElementById("searchDate").value;
+
+  try {
+    const bookings = await apiGet("/bookings");
+
+    const roomList = await apiGet("/rooms");
+    const roomMap = {};
+    roomList.forEach(r => roomMap[r.room_id] = r.name);
+
+    let filtered = bookings;
+
+    if (name)  filtered = filtered.filter(b => b.name.includes(name));
+    if (phone) filtered = filtered.filter(b => b.phone.includes(phone));
+    if (date)  filtered = filtered.filter(b => b.checkin === date);
+
+    renderTable(filtered, roomMap);
+
+  } catch (e) {
+    console.error(e);
+    document.querySelector("#bookingTable tbody").innerHTML =
+      `<tr><td colspan="9" style="text-align:center;">載入失敗</td></tr>`;
+  }
+}
+
+// 渲染表格
+function renderTable(data, roomMap) {
+  const tbody = document.querySelector("#bookingTable tbody");
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;">沒有資料</td></tr>`;
+    return;
+  }
+
+  data.forEach(b => {
+    const statusClass = {
+      confirmed: "status-confirmed",
+      pending: "status-pending",
+      cancelled: "status-cancelled"
+    }[b.status] || "status-pending";
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${b.order_id}</td>
+        <td>${b.name}</td>
+        <td>${b.phone}</td>
+        <td>${roomMap[b.room_id] || "-"}</td>
+        <td>${b.checkin}</td>
+        <td>${b.checkout}</td>
+        <td>NT$ ${b.amount}</td>
+        <td><span class="status-tag ${statusClass}">${b.status}</span></td>
+
+        <td>
+          <button class="btn-secondary" style="padding:6px 12px; font-size:14px;"
+                  onclick="updateStatus('${b.order_id}', 'confirmed')">確認</button>
+
+          <button class="btn-secondary" style="padding:6px 12px; font-size:14px;"
+                  onclick="updateStatus('${b.order_id}', 'cancelled')">取消</button>
+
+          <button class="btn-secondary" style="padding:6px 12px; font-size:14px; background:#EA4335; color:#fff;"
+                  onclick="deleteBooking('${b.order_id}')">刪除</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// 更新訂單狀態
+async function updateStatus(orderId, status) {
+  if (!confirm(`確定將訂單 ${orderId} 標記為「${status}」？`)) return;
+
+  const res = await apiPost("/updateBooking", { order_id: orderId, status });
+  if (res.success) {
+    alert("更新成功！");
+    loadBookings();
+  } else {
+    alert("更新失敗：" + res.message);
+  }
+}
+
+// 刪除訂單
+async function deleteBooking(orderId) {
+  if (!confirm(`確定要刪除訂單 ${orderId}?`)) return;
+
+  const res = await apiPost("/deleteBooking", { order_id: orderId });
+  if (res.success) {
+    alert("已刪除！");
+    loadBookings();
+  } else {
+    alert("刪除失敗：" + res.message);
+  }
+}
+
+// 預設載入
+loadBookings();
+</script>
+
+</body>
+</html>
