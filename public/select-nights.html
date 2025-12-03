@@ -6,65 +6,93 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-  body { font-family: "Noto Sans TC"; padding: 20px; }
-  h2 { margin-bottom: 15px; }
+  body {
+    font-family: "Noto Sans TC", sans-serif;
+    padding: 20px;
+    background: #fafafa;
+  }
 
-  .container { margin-top: 20px; }
+  h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .container {
+    margin-top: 10px;
+  }
 
   .night-row {
+    background: #f2f2f2;
+    border-radius: 10px;
+    padding: 16px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px;
-    background: #f7f7f7;
-    border-radius: 8px;
+    font-size: 17px;
     margin-bottom: 12px;
     cursor: pointer;
+    transition: 0.15s;
   }
 
-  .night-row:hover { background: #ececec; }
+  .night-row:hover {
+    background: #e6e6e6;
+  }
 
-  .price { font-weight: bold; color: #008800; }
+  .night-row.selected {
+    background: #d7ebff;
+    border-left: 4px solid #0a7aff;
+  }
+
+  .price {
+    font-weight: bold;
+    color: #0b8a27;
+  }
 
   .btn {
+    margin-top: 25px;
     width: 100%;
-    margin-top: 20px;
     background: #007bff;
     color: white;
-    padding: 14px;
-    border-radius: 8px;
+    font-size: 18px;
+    padding: 16px;
+    border-radius: 10px;
     text-align: center;
     cursor: pointer;
+    font-weight: bold;
   }
 
-  .btn:active { opacity: 0.8; }
+  .btn:active {
+    opacity: 0.8;
+  }
 
 </style>
 </head>
 <body>
 
 <h2 id="title">選擇入住天數</h2>
+
 <div id="nightContainer" class="container"></div>
 
 <div class="btn" id="nextBtn">下一步</div>
 
+
 <script>
 /* -------------------------------------------------------
-   取得網址參數
+   取得參數 ?roomId=A&date=2025-02-14
 ------------------------------------------------------- */
 const params = new URLSearchParams(location.search);
 const roomId = params.get("roomId");
 const startDate = params.get("date");
 
-/* -------------------------------------------------------
-   全域變數
-------------------------------------------------------- */
 let room = null;
 let selectedNights = null;
 
 /* -------------------------------------------------------
-   讀取房型資料
+   初始化
 ------------------------------------------------------- */
+loadRoomData();
+
 async function loadRoomData() {
   try {
     const res = await fetch("data/rooms.json");
@@ -73,46 +101,46 @@ async function loadRoomData() {
     room = rooms.find(r => r.id === roomId);
 
     if (!room) {
-      alert("找不到房型資料");
+      document.body.innerHTML = "<h3>找不到房型資料</h3>";
       return;
     }
 
     document.getElementById("title").innerText =
       `選擇入住天數（${room.title}）`;
 
-    renderNightOptions();
+    renderOptions();
 
   } catch (err) {
-    console.error("讀取房型資料失敗:", err);
-    alert("系統錯誤，無法載入房型資料（rooms.json）。");
+    console.error(err);
+    alert("無法載入房型資料（rooms.json）。");
   }
 }
 
 /* -------------------------------------------------------
-   依據房型可住天數產生選項
+   建立入住天數選項
 ------------------------------------------------------- */
-function renderNightOptions() {
+function renderOptions() {
   const container = document.getElementById("nightContainer");
   container.innerHTML = "";
 
   for (let n = room.minNights; n <= room.maxNights; n++) {
-    const price = calcTotalPrice(n);
+    let total = calcTotalPrice(n);
 
     const row = document.createElement("div");
     row.className = "night-row";
+
     row.innerHTML = `
       <div>${n} 晚</div>
-      <div class="price">$${price.toLocaleString()}</div>
+      <div class="price">$${total.toLocaleString()}</div>
     `;
 
     row.onclick = () => {
       selectedNights = n;
 
-      // 高亮選取
       document.querySelectorAll(".night-row")
-        .forEach(e => e.style.background = "#f7f7f7");
+        .forEach(e => e.classList.remove("selected"));
 
-      row.style.background = "#cfe8ff";
+      row.classList.add("selected");
     };
 
     container.appendChild(row);
@@ -120,12 +148,10 @@ function renderNightOptions() {
 }
 
 /* -------------------------------------------------------
-   計算入住價格
-   依據 rooms.json：weekdayPrice / weekendPrice / specialPrice
+   計算入住每日價格
 ------------------------------------------------------- */
 function calcTotalPrice(nights) {
   let total = 0;
-
   const checkIn = new Date(startDate);
 
   for (let i = 0; i < nights; i++) {
@@ -138,12 +164,12 @@ function calcTotalPrice(nights) {
     const key = `${y}-${m}-${dd}`;
 
     // 特殊日
-    if (room.specialPrice[key]) {
+    if (room.specialPrice && room.specialPrice[key]) {
       total += room.specialPrice[key];
       continue;
     }
 
-    const w = d.getDay(); // 0=日 6=六
+    const w = d.getDay(); // 0=日, 6=六
 
     // 假日
     if (w === 0 || w === 6) {
@@ -157,24 +183,17 @@ function calcTotalPrice(nights) {
 }
 
 /* -------------------------------------------------------
-   下一步 → 填寫資料
+   下一步 → 跳 form.html
 ------------------------------------------------------- */
 document.getElementById("nextBtn").onclick = () => {
   if (!selectedNights) {
-    alert("請先選擇入住天數");
+    alert("請選擇入住天數");
     return;
   }
 
-  const url =
+  location.href =
     `form.html?roomId=${roomId}&date=${startDate}&nights=${selectedNights}`;
-
-  location.href = url;
 };
-
-/* -------------------------------------------------------
-   初始化
-------------------------------------------------------- */
-loadRoomData();
 </script>
 
 </body>
