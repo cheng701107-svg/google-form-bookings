@@ -1,30 +1,28 @@
 /* ===========================================================
-   api.js － 前端與 GAS 的 API 溝通層（Google Material｜Card Flow）
+   前端 API：GET 使用 JSONP（跨網域保證成功）
+             POST 使用 fetch (JSON)
    =========================================================== */
 
-/* ---------------------------------------------------------
-   ⭐ STEP 1：設定你的 GAS 部屬網址
-   --------------------------------------------------------- */
-
-// ⚠️ 請將此網址替換成你的 GAS Deploy URL
-// 例如：https://script.google.com/macros/s/AKxxxxxx/exec
-
-const API_BASE = "https://script.google.com/macros/s/AKfycbydnqI9s9AQdqMgLZ5IqQDLQJUr1lMCMubZIUORD-Qrw0CJCL9VJfiMEoxMja_yB43A/exec";
+const API_BASE =
+  "https://script.google.com/macros/s/AKfycbydnqI9s9AQdqMgLZ5IqQDLQJUr1lMCMubZIUORD-Qrw0CJCL9VJfiMEoxMja_yB43A/exec";
 
 
-/* ---------------------------------------------------------
-   ⭐ STEP 2：統一 GET 請求
-   --------------------------------------------------------- */
-async function apiGet(path) {
+/* ===========================================================
+   ⭐ JSONP GET（rooms / availability / bookings）
+   =========================================================== */
+async function apiGet(params = "") {
   return new Promise((resolve, reject) => {
-    const callback = "cb" + Date.now();
-    window[callback] = data => {
-      delete window[callback];
+    const callback = "cb_" + Date.now();
+
+    // 建立 callback
+    window[callback] = function (data) {
       resolve(data);
+      delete window[callback];
+      script.remove();
     };
 
     const script = document.createElement("script");
-    script.src = `${API_BASE}${path}&callback=${callback}`;
+    script.src = `${API_BASE}?${params}&callback=${callback}`;
     script.onerror = reject;
 
     document.body.appendChild(script);
@@ -32,38 +30,50 @@ async function apiGet(path) {
 }
 
 
-async function apiPost(path, data = {}) {
-  const res = await fetch(API_BASE + path, {
+/* ===========================================================
+   ⭐ JSON POST（createBooking / update / delete）
+   =========================================================== */
+async function apiPost(action, body = {}) {
+  const res = await fetch(`${API_BASE}?action=${action}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: JSON.stringify(body),
   });
+
   return res.json();
 }
 
 
+/* ===========================================================
+   🚀 封裝成可直接呼叫的 API
+   =========================================================== */
 
-/* ---------------------------------------------------------
-   ⭐ STEP 3：統一 POST 請求
-   --------------------------------------------------------- */
-async function apiPost(path, data = {}) {
-  const url = API_BASE + path;
+// 取得房型
+function getRoomsAPI() {
+  return apiGet("action=rooms");
+}
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data)
-    });
+// 查詢房況
+function getAvailabilityAPI(date, nights = 1) {
+  return apiGet(`action=availability&date=${date}&nights=${nights}`);
+}
 
-    if (!res.ok) throw new Error("HTTP 錯誤：" + res.status);
+// 取得訂單列表
+function getBookingsAPI() {
+  return apiGet("action=bookings");
+}
 
-    return await res.json();
+// 建立訂單
+function createBookingAPI(data) {
+  return apiPost("createBooking", data);
+}
 
-  } catch (err) {
-    console.error("POST API 發生錯誤：", url, err);
-    throw err;
-  }
+// 更新訂單
+function updateBookingAPI(data) {
+  return apiPost("updateBooking", data);
+}
+
+// 刪除訂單
+function deleteBookingAPI(order_id) {
+  return apiPost("deleteBooking", { order_id });
 }
