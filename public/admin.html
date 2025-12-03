@@ -112,12 +112,14 @@
   /* ---------- Modal ---------- */
   .modal-box {
     width: 92%;
-    max-width: 430px;
+    max-width: 460px;
     background: white;
     padding: 22px;
     border-radius: 16px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.25);
     animation: fadeIn 0.2s ease;
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
   @keyframes fadeIn {
@@ -142,13 +144,18 @@
     margin-bottom: 6px;
   }
 
-  .form-row input, .form-row select {
+  .form-row input, .form-row select, .form-row textarea {
     width: 100%;
     padding: 10px 12px;
     font-size: 15px;
     border: 1px solid #ccc;
     border-radius: 10px;
     outline: none;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 70px;
   }
 
   .modal-btns {
@@ -192,6 +199,7 @@
         <th>房型</th>
         <th>入住</th>
         <th>退房</th>
+        <th>付款</th>
         <th>狀態</th>
         <th></th>
       </tr>
@@ -203,8 +211,21 @@
 <!-- =============== EDIT MODAL =============== -->
 <div id="editModalBg" class="modal-bg">
   <div class="modal-box">
+    
     <div class="modal-title">編輯訂單</div>
 
+    <!-- 訂單編號 & 建立時間 -->
+    <div class="form-row">
+      <label>訂單編號（不可修改）</label>
+      <input type="text" id="editOrderId" readonly>
+    </div>
+
+    <div class="form-row">
+      <label>建立時間（不可修改）</label>
+      <input type="text" id="editCreatedAt" readonly>
+    </div>
+
+    <!-- 基本資料 -->
     <div class="form-row">
       <label>姓名</label>
       <input type="text" id="editName">
@@ -230,29 +251,94 @@
       <input type="date" id="editCheckout">
     </div>
 
+    <!-- 訂單狀態 -->
     <div class="form-row">
       <label>訂單狀態</label>
-      <select id="editStatus">
-        <option value="new">新訂單</option>
-        <option value="confirmed">已確認</option>
+      <select id="editOrderStatus">
+        <option value="active">成立</option>
         <option value="cancelled">已取消</option>
+        <option value="checkedin">已入住</option>
+        <option value="completed">已完成</option>
       </select>
+    </div>
+
+    <!-- 付款資訊 -->
+    <div class="form-row">
+      <label>付款方式</label>
+      <select id="editPayMethod">
+        <option value="none">尚未選擇</option>
+        <option value="bank">匯款</option>
+        <option value="linepay">LINE Pay</option>
+        <option value="card">信用卡</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label>匯款後五碼（僅匯款需填）</label>
+      <input type="text" id="editBankCode">
+    </div>
+
+    <div class="form-row">
+      <label>訂金金額</label>
+      <input type="number" id="editDeposit">
+    </div>
+
+    <div class="form-row">
+      <label>尾款金額（自動計算）</label>
+      <input type="number" id="editRemaining" readonly>
+    </div>
+
+    <div class="form-row">
+      <label>付款狀態</label>
+      <select id="editPayStatus">
+        <option value="unpaid">未付款</option>
+        <option value="deposit">已付訂</option>
+        <option value="paid">已付全額</option>
+      </select>
+    </div>
+
+    <!-- 註記 & 備註 -->
+    <div class="form-row">
+      <label>MARK（內部註記）</label>
+      <textarea id="editMark"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>業者備註</label>
+      <textarea id="editNote"></textarea>
     </div>
 
     <div class="modal-btns">
       <button class="btn cancel" onclick="closeEdit()">取消</button>
       <button class="btn save" onclick="saveEdit()">儲存</button>
     </div>
+
   </div>
 </div>
 
 <script>
 
-/* 假資料（可改成 Google Sheet / API） */
+//
+// 假資料（等你說要接 Google Sheet，我再幫你串）
+//
 let bookings = [
-  { id:"B001", name:"王小明", phone:"0912000111", room:"A館包棟", checkin:"2025-12-04", checkout:"2025-12-05", status:"new" },
-  { id:"B002", name:"林美麗", phone:"0988777666", room:"B館包棟", checkin:"2025-12-10", checkout:"2025-12-12", status:"confirmed" },
-  { id:"B003", name:"陳大同", phone:"0922333444", room:"A館包棟", checkin:"2025-12-20", checkout:"2025-12-21", status:"cancelled" }
+  {
+    id:"B001",
+    createdAt:"2025-01-15 10:23",
+    name:"王小明",
+    phone:"0912000111",
+    room:"A館包棟",
+    checkin:"2025-12-04",
+    checkout:"2025-12-05",
+    status:"active",       // 成立
+    payMethod:"bank",
+    bankCode:"12345",
+    deposit:3000,
+    remaining:18000,
+    payStatus:"deposit",   // 已付訂
+    mark:"常客",
+    note:"指定靠窗房"
+  }
 ];
 
 let editTarget = null;
@@ -270,10 +356,10 @@ function renderTable() {
       <td>${b.room}</td>
       <td>${b.checkin}</td>
       <td>${b.checkout}</td>
-      <td><span class="tag ${b.status}">${statusText(b.status)}</span></td>
+      <td>${payStatusText(b.payStatus)}</td>
+      <td>${orderStatusText(b.status)}</td>
 
       <td>
-        <!-- EDIT BUTTON -->
         <button class="btn-icon" onclick="openEdit('${b.id}')">
           <span class="material-icons">edit</span>
         </button>
@@ -288,11 +374,20 @@ function renderTable() {
   });
 }
 
-function statusText(code) {
+function payStatusText(code) {
   return {
-    new:"新訂單",
-    confirmed:"已確認",
-    cancelled:"已取消"
+    unpaid:"未付款",
+    deposit:"已付訂",
+    paid:"已付全額"
+  }[code] || "-";
+}
+
+function orderStatusText(code) {
+  return {
+    active:"成立",
+    cancelled:"已取消",
+    checkedin:"已入住",
+    completed:"已完成"
   }[code] || "-";
 }
 
@@ -300,12 +395,28 @@ function statusText(code) {
 function openEdit(id) {
   editTarget = bookings.find(b => b.id === id);
 
+  // 基本資料
+  document.getElementById("editOrderId").value = editTarget.id;
+  document.getElementById("editCreatedAt").value = editTarget.createdAt;
   document.getElementById("editName").value = editTarget.name;
   document.getElementById("editPhone").value = editTarget.phone;
   document.getElementById("editRoom").value = editTarget.room;
   document.getElementById("editCheckin").value = editTarget.checkin;
   document.getElementById("editCheckout").value = editTarget.checkout;
-  document.getElementById("editStatus").value = editTarget.status;
+
+  // 訂單狀態
+  document.getElementById("editOrderStatus").value = editTarget.status;
+
+  // 付款資訊
+  document.getElementById("editPayMethod").value = editTarget.payMethod;
+  document.getElementById("editBankCode").value = editTarget.bankCode;
+  document.getElementById("editDeposit").value = editTarget.deposit;
+  document.getElementById("editRemaining").value = editTarget.remaining;
+  document.getElementById("editPayStatus").value = editTarget.payStatus;
+
+  // 備註/註記
+  document.getElementById("editMark").value = editTarget.mark;
+  document.getElementById("editNote").value = editTarget.note;
 
   document.getElementById("editModalBg").style.display = "flex";
 }
@@ -320,7 +431,17 @@ function saveEdit() {
   editTarget.room = document.getElementById("editRoom").value;
   editTarget.checkin = document.getElementById("editCheckin").value;
   editTarget.checkout = document.getElementById("editCheckout").value;
-  editTarget.status = document.getElementById("editStatus").value;
+
+  editTarget.status = document.getElementById("editOrderStatus").value;
+
+  editTarget.payMethod = document.getElementById("editPayMethod").value;
+  editTarget.bankCode = document.getElementById("editBankCode").value;
+  editTarget.deposit = Number(document.getElementById("editDeposit").value);
+  editTarget.remaining = editTarget.remaining;
+  editTarget.payStatus = document.getElementById("editPayStatus").value;
+
+  editTarget.mark = document.getElementById("editMark").value;
+  editTarget.note = document.getElementById("editNote").value;
 
   closeEdit();
   renderTable();
