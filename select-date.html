@@ -30,7 +30,6 @@
     margin-bottom: 20px;
   }
 
-  /* 日曆卡片 */
   .calendar-card {
     background: #fff;
     border-radius: 14px;
@@ -39,7 +38,6 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
 
-  /* 月曆 header */
   .calendar-header {
     display: flex;
     justify-content: space-between;
@@ -61,7 +59,6 @@
     padding: 6px 10px;
   }
 
-  /* 星期列 */
   .week-row {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -75,7 +72,6 @@
     color: #555;
   }
 
-  /* 日期列 */
   .date-row {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -88,27 +84,40 @@
     font-size: 15px;
     cursor: pointer;
     position: relative;
-  }
-
-  /* 不可選日期 */
-  .disabled {
-    color: #ccc !important;
-    pointer-events: none;
-  }
-
-  /* 可選日期 hover */
-  .date-cell:hover:not(.disabled) {
-    background: #eaf2fe;
     border-radius: 50%;
   }
 
-  /* 已選日期 */
+  /* hover */
+  .date-cell:hover:not(.disabled) {
+    background: #eaf2fe;
+  }
+
+  /* 已選擇 */
   .selected {
     background: #1a73e8 !important;
     color: #fff !important;
-    border-radius: 50%;
     font-weight: 700;
   }
+
+  /* 不可選 */
+  .disabled {
+    color: #ccc !important;
+    pointer-events: none;
+    background: none !important;
+  }
+
+  /* 特殊日提示點 */
+  .special-dot {
+    width: 5px;
+    height: 5px;
+    background: #ff6d00;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
 </style>
 
 </head>
@@ -149,19 +158,29 @@ let roomId = params.get("roomId");
 let now = new Date();
 let displayMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-// ⭐ 載入房型資料
+let roomData = null;
+let disabledDates = [];
+let specialDates = {}; // specialPrice key
+
+// 讀取房型資料
 async function loadRoom() {
   const res = await fetch("data/rooms.json");
   const rooms = await res.json();
-  const room = rooms.find(r => r.id === roomId);
+
+  roomData = rooms.find(r => r.id === roomId);
+
+  disabledDates = roomData.disabledDates || [];
+  specialDates = roomData.specialPrice || {};
 
   document.getElementById("roomTitle").innerText =
-    `${room.title} · 每晚 $${room.basePrice.toLocaleString()}`;
+    `${roomData.title} · 可入住 ${roomData.minNights}-${roomData.maxNights} 晚`;
+
+  renderCalendar();
 }
 
 loadRoom();
 
-// ⭐ 渲染月曆
+// 渲染月曆
 function renderCalendar() {
   const year = displayMonth.getFullYear();
   const month = displayMonth.getMonth();
@@ -169,8 +188,8 @@ function renderCalendar() {
   document.getElementById("monthTitle").innerText =
     `${year} 年 ${month + 1} 月`;
 
-  const datesContainer = document.getElementById("dates");
-  datesContainer.innerHTML = "";
+  const container = document.getElementById("dates");
+  container.innerHTML = "";
 
   const firstDay = new Date(year, month, 1).getDay();
   const totalDays = new Date(year, month + 1, 0).getDate();
@@ -179,17 +198,18 @@ function renderCalendar() {
   let row = document.createElement("div");
   row.className = "date-row";
 
-  // 空白格
+  // 空格
   for (let i = 0; i < firstDay; i++) {
     const empty = document.createElement("div");
     empty.className = "date-cell";
     row.appendChild(empty);
   }
 
-  // 日期格
+  // 日期
   for (let d = 1; d <= totalDays; d++) {
+
     if (row.children.length === 7) {
-      datesContainer.appendChild(row);
+      container.appendChild(row);
       row = document.createElement("div");
       row.className = "date-row";
     }
@@ -199,35 +219,44 @@ function renderCalendar() {
     cell.innerText = d;
 
     const dateObj = new Date(year, month, d);
+    const dateStr = dateObj.toISOString().split("T")[0];
 
-    // 不可選：過去的日期
+    // 不可選：過去日期
     if (dateObj < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
       cell.classList.add("disabled");
+
+    // 不可選：disabledDates
+    } else if (disabledDates.includes(dateStr)) {
+      cell.classList.add("disabled");
+
     } else {
-      // 可選 → 點擊事件
       cell.onclick = () => selectDate(year, month + 1, d);
+    }
+
+    // 特殊日點
+    if (specialDates[dateStr]) {
+      const dot = document.createElement("div");
+      dot.className = "special-dot";
+      cell.appendChild(dot);
     }
 
     row.appendChild(cell);
   }
 
-  datesContainer.appendChild(row);
+  container.appendChild(row);
 }
 
-// ⭐ 切換月份
 function changeMonth(delta) {
   displayMonth.setMonth(displayMonth.getMonth() + delta);
   renderCalendar();
 }
 
-// ⭐ 選擇日期
 function selectDate(y, m, d) {
   const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  window.location.href = `select-nights.html?roomId=${roomId}&date=${dateStr}`;
-}
 
-// 初始化
-renderCalendar();
+  window.location.href =
+    `select-nights.html?roomId=${roomId}&date=${dateStr}`;
+}
 </script>
 
 </body>
