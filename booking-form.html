@@ -140,7 +140,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   };
 
   try {
-    const res = await apiPost("/createBooking", payload);
+    const res = await apiPost("?action=createBooking", payload);
 
     if (res.success) {
       localStorage.setItem("order_id", res.order_id);
