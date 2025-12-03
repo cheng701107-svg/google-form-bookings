@@ -1,161 +1,163 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<title>後台管理系統</title>
+<title>管理後台</title>
 
-<!-- Google Fonts & Material Icons -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <style>
   body {
+    margin: 0;
     font-family: "Noto Sans TC", sans-serif;
     background: #f5f5f5;
-    margin: 0;
+    display: flex;
   }
 
-  /* ---------- Top App Bar ---------- */
-  .appbar {
+  /* ---------------- Side Menu ---------------- */
+  .sidebar {
+    width: 220px;
     background: #1976d2;
     color: white;
-    padding: 16px;
-    font-size: 20px;
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    min-height: 100vh;
+    padding-top: 30px;
   }
 
-  /* ---------- Search Bar ---------- */
+  .menu-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .menu-item {
+    padding: 16px 20px;
+    cursor: pointer;
+    font-size: 17px;
+  }
+
+  .menu-item:hover {
+    background: #145ea8;
+  }
+
+  .menu-item.active {
+    background: #1565c0;
+  }
+
+  /* ---------------- Main Content ---------------- */
+  .content {
+    flex: 1;
+    padding: 20px;
+  }
+
+  h2 {
+    margin-top: 0;
+  }
+
+  /* Search Bar */
   .search-box {
-    margin: 20px;
-    display: flex;
     background: white;
-    padding: 10px 14px;
-    border-radius: 14px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    display: flex;
     gap: 10px;
-    align-items: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
   }
 
   .search-box input {
-    flex: 1;
     border: none;
-    font-size: 16px;
     outline: none;
+    flex: 1;
+    font-size: 16px;
   }
 
-  /* ---------- Table ---------- */
-  .table-box {
-    margin: 20px;
-    background: white;
-    border-radius: 14px;
-    padding: 10px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-  }
-
+  /* Table */
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 5px;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
 
   th, td {
-    padding: 14px 10px;
-    font-size: 15px;
+    padding: 14px;
     border-bottom: 1px solid #eee;
+    font-size: 15px;
   }
 
   th {
-    font-weight: 600;
-    color: #444;
+    background: #f0f0f0;
+    text-align: left;
   }
 
-  /* ---------- Status Tag ---------- */
   .tag {
-    padding: 4px 10px;
+    padding: 6px 10px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
     display: inline-block;
   }
-  .tag.new { background: #e3f2fd; color: #1976d2; }
-  .tag.confirmed { background: #e8f5e9; color: #2e7d32; }
-  .tag.cancelled { background: #ffebee; color: #c62828; }
+
+  .tag-unpaid { background: #ffebee; color: #c62828; }
+  .tag-deposit { background: #fff3cd; color: #c58900; }
+  .tag-paid { background: #e8f5e9; color: #2e7d32; }
+
+  .tag-active { background: #e3f2fd; color: #1976d2; }
+  .tag-cancelled { background: #ffebee; color: #c62828; }
+  .tag-checkedin { background: #ede7f6; color: #5e35b1; }
+  .tag-completed { background: #e8f5e9; color: #2e7d32; }
 
   .btn-icon {
-    border: none;
-    background: transparent;
     cursor: pointer;
-  }
-
-  .btn-icon .material-icons {
-    font-size: 22px;
-    color: #555;
-  }
-
-  .btn-icon:hover .material-icons {
     color: #1976d2;
   }
 
-  /* ---------- Modal Background ---------- */
+  /* ---------------- Modal ---------------- */
   .modal-bg {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.3);
     display: none;
     justify-content: center;
     align-items: center;
   }
 
-  /* ---------- Modal ---------- */
-  .modal-box {
+  .modal {
     width: 92%;
-    max-width: 460px;
+    max-width: 550px;
     background: white;
+    border-radius: 14px;
     padding: 22px;
-    border-radius: 16px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-    animation: fadeIn 0.2s ease;
     max-height: 90vh;
     overflow-y: auto;
-  }
-
-  @keyframes fadeIn {
-    from { transform: translateY(10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-
-  .modal-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   }
 
   .form-row {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
   .form-row label {
+    display: block;
     font-size: 14px;
     color: #555;
-    display: block;
     margin-bottom: 6px;
   }
 
-  .form-row input, .form-row select, .form-row textarea {
+  .form-row input,
+  .form-row select,
+  .form-row textarea {
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px;
     font-size: 15px;
+    border-radius: 8px;
     border: 1px solid #ccc;
-    border-radius: 10px;
-    outline: none;
-  }
-
-  textarea {
-    resize: vertical;
-    min-height: 70px;
   }
 
   .modal-btns {
@@ -166,32 +168,44 @@
   }
 
   .btn {
-    padding: 10px 16px;
-    border-radius: 10px;
+    padding: 10px 18px;
+    border-radius: 8px;
     cursor: pointer;
     border: none;
     font-weight: 600;
   }
 
-  .btn.cancel { background: #eee; }
-  .btn.save { background: #1976d2; color: white; }
+  .btn-cancel { background: #eee; }
+  .btn-save { background: #1976d2; color: white; }
 
 </style>
 </head>
 
 <body>
 
-<!-- Top Bar -->
-<div class="appbar">管理後台</div>
+<!-- ---------------- Sidebar ---------------- -->
+<div class="sidebar">
+  <div class="menu-title">管理後台</div>
 
-<!-- Search -->
-<div class="search-box">
-  <span class="material-icons">search</span>
-  <input type="text" id="searchInput" placeholder="搜尋姓名 / 手機 / 房型...">
+  <div class="menu-item active">訂單管理</div>
+
+  <div class="menu-item" onclick="location.href='admin-rooms.html'">
+    房型管理
+  </div>
+
+  <div class="menu-item">系統設定（未來可擴充）</div>
 </div>
 
-<!-- Booking Table -->
-<div class="table-box">
+<!-- ---------------- Main Content ---------------- -->
+<div class="content">
+
+  <h2>訂單管理</h2>
+
+  <div class="search-box">
+    <span class="material-icons">search</span>
+    <input id="searchInput" placeholder="搜尋姓名 / 電話 / 房型..." oninput="renderTable()" />
+  </div>
+
   <table>
     <thead>
       <tr>
@@ -199,74 +213,42 @@
         <th>房型</th>
         <th>入住</th>
         <th>退房</th>
+        <th>金額</th>
         <th>付款</th>
         <th>狀態</th>
         <th></th>
       </tr>
     </thead>
-    <tbody id="bookingTable"></tbody>
+    <tbody id="orderTable"></tbody>
   </table>
+
 </div>
 
-<!-- =============== EDIT MODAL =============== -->
-<div id="editModalBg" class="modal-bg">
-  <div class="modal-box">
-    
-    <div class="modal-title">編輯訂單</div>
+<!-- ---------------- Edit Modal ---------------- -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modal">
 
-    <!-- 訂單編號 & 建立時間 -->
-    <div class="form-row">
-      <label>訂單編號（不可修改）</label>
-      <input type="text" id="editOrderId" readonly>
-    </div>
+    <h3>編輯訂單</h3>
 
-    <div class="form-row">
-      <label>建立時間（不可修改）</label>
-      <input type="text" id="editCreatedAt" readonly>
-    </div>
-
-    <!-- 基本資料 -->
     <div class="form-row">
       <label>姓名</label>
-      <input type="text" id="editName">
+      <input id="m_name" />
     </div>
 
     <div class="form-row">
       <label>手機</label>
-      <input type="text" id="editPhone">
+      <input id="m_phone" />
     </div>
 
     <div class="form-row">
-      <label>房型</label>
-      <input type="text" id="editRoom">
+      <label>Email</label>
+      <input id="m_email" />
     </div>
 
-    <div class="form-row">
-      <label>入住日期</label>
-      <input type="date" id="editCheckin">
-    </div>
-
-    <div class="form-row">
-      <label>退房日期</label>
-      <input type="date" id="editCheckout">
-    </div>
-
-    <!-- 訂單狀態 -->
-    <div class="form-row">
-      <label>訂單狀態</label>
-      <select id="editOrderStatus">
-        <option value="active">成立</option>
-        <option value="cancelled">已取消</option>
-        <option value="checkedin">已入住</option>
-        <option value="completed">已完成</option>
-      </select>
-    </div>
-
-    <!-- 付款資訊 -->
     <div class="form-row">
       <label>付款方式</label>
-      <select id="editPayMethod">
-        <option value="none">尚未選擇</option>
+      <select id="m_paymentMethod">
+        <option value="none">未選擇</option>
         <option value="bank">匯款</option>
         <option value="linepay">LINE Pay</option>
         <option value="card">信用卡</option>
@@ -274,181 +256,209 @@
     </div>
 
     <div class="form-row">
-      <label>匯款後五碼（僅匯款需填）</label>
-      <input type="text" id="editBankCode">
-    </div>
-
-    <div class="form-row">
-      <label>訂金金額</label>
-      <input type="number" id="editDeposit">
-    </div>
-
-    <div class="form-row">
-      <label>尾款金額（自動計算）</label>
-      <input type="number" id="editRemaining" readonly>
+      <label>匯款後五碼</label>
+      <input id="m_paymentCode" />
     </div>
 
     <div class="form-row">
       <label>付款狀態</label>
-      <select id="editPayStatus">
+      <select id="m_paymentStatus">
         <option value="unpaid">未付款</option>
         <option value="deposit">已付訂</option>
         <option value="paid">已付全額</option>
       </select>
     </div>
 
-    <!-- 註記 & 備註 -->
     <div class="form-row">
-      <label>MARK（內部註記）</label>
-      <textarea id="editMark"></textarea>
+      <label>訂單狀態</label>
+      <select id="m_status">
+        <option value="active">成立</option>
+        <option value="checkedin">已入住</option>
+        <option value="completed">已完成</option>
+        <option value="cancelled">已取消</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label>備註（MARK）</label>
+      <textarea id="m_mark"></textarea>
     </div>
 
     <div class="form-row">
       <label>業者備註</label>
-      <textarea id="editNote"></textarea>
+      <textarea id="m_note"></textarea>
     </div>
 
     <div class="modal-btns">
-      <button class="btn cancel" onclick="closeEdit()">取消</button>
-      <button class="btn save" onclick="saveEdit()">儲存</button>
+      <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn btn-save" onclick="saveOrder()">儲存</button>
     </div>
 
   </div>
 </div>
 
-<script>
+<script type="module">
 
-//
-// 假資料（等你說要接 Google Sheet，我再幫你串）
-//
-let bookings = [
-  {
-    id:"B001",
-    createdAt:"2025-01-15 10:23",
-    name:"王小明",
-    phone:"0912000111",
-    room:"A館包棟",
-    checkin:"2025-12-04",
-    checkout:"2025-12-05",
-    status:"active",       // 成立
-    payMethod:"bank",
-    bankCode:"12345",
-    deposit:3000,
-    remaining:18000,
-    payStatus:"deposit",   // 已付訂
-    mark:"常客",
-    note:"指定靠窗房"
-  }
-];
+/* ----------------------------------------------------
+    Firebase 初始化
+---------------------------------------------------- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, doc, updateDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let editTarget = null;
+const firebaseConfig = {
+  apiKey: "AIzaSyCnytMF9E5kgjadIe8EpKYoWCqsAVR93I0",
+  authDomain: "form-booking-8fb46.firebaseapp.com",
+  projectId: "form-booking-8fb46",
+  storageBucket: "form-booking-8fb46.appspot.com",
+  messagingSenderId: "866268132852",
+  appId: "1:866268132852:web:566f1fe2d79cacabd6b5a1",
+  measurementId: "G-J1RNH6VBTG"
+};
 
-/* ---------- Render Table ---------- */
-function renderTable() {
-  const tbody = document.getElementById("bookingTable");
-  tbody.innerHTML = "";
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  bookings.forEach(b => {
-    const row = document.createElement("tr");
+/* ----------------------------------------------------
+    全域變數
+---------------------------------------------------- */
+let orders = [];
+let editingId = null;
 
-    row.innerHTML = `
-      <td>${b.name}</td>
-      <td>${b.room}</td>
-      <td>${b.checkin}</td>
-      <td>${b.checkout}</td>
-      <td>${payStatusText(b.payStatus)}</td>
-      <td>${orderStatusText(b.status)}</td>
-
-      <td>
-        <button class="btn-icon" onclick="openEdit('${b.id}')">
-          <span class="material-icons">edit</span>
-        </button>
-
-        <button class="btn-icon" onclick="openDelete('${b.id}')">
-          <span class="material-icons">delete</span>
-        </button>
-      </td>
-    `;
-
-    tbody.appendChild(row);
-  });
-}
-
-function payStatusText(code) {
+/* ----------------------------------------------------
+    標籤顏色
+---------------------------------------------------- */
+function payTag(code) {
   return {
-    unpaid:"未付款",
-    deposit:"已付訂",
-    paid:"已付全額"
-  }[code] || "-";
+    unpaid: `<span class="tag tag-unpaid">未付款</span>`,
+    deposit: `<span class="tag tag-deposit">已付訂</span>`,
+    paid: `<span class="tag tag-paid">已付全額</span>`
+  }[code];
 }
 
-function orderStatusText(code) {
+function statusTag(code) {
   return {
-    active:"成立",
-    cancelled:"已取消",
-    checkedin:"已入住",
-    completed:"已完成"
-  }[code] || "-";
+    active: `<span class="tag tag-active">成立</span>`,
+    cancelled: `<span class="tag tag-cancelled">取消</span>`,
+    checkedin: `<span class="tag tag-checkedin">已入住</span>`,
+    completed: `<span class="tag tag-completed">完成</span>`
+  }[code];
 }
 
-/* ---------- EDIT MODAL FUNCTIONS ---------- */
-function openEdit(id) {
-  editTarget = bookings.find(b => b.id === id);
+/* ----------------------------------------------------
+    讀取訂單
+---------------------------------------------------- */
+async function loadOrders() {
+  const snap = await getDocs(collection(db, "orders"));
 
-  // 基本資料
-  document.getElementById("editOrderId").value = editTarget.id;
-  document.getElementById("editCreatedAt").value = editTarget.createdAt;
-  document.getElementById("editName").value = editTarget.name;
-  document.getElementById("editPhone").value = editTarget.phone;
-  document.getElementById("editRoom").value = editTarget.room;
-  document.getElementById("editCheckin").value = editTarget.checkin;
-  document.getElementById("editCheckout").value = editTarget.checkout;
+  orders = [];
+  snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
 
-  // 訂單狀態
-  document.getElementById("editOrderStatus").value = editTarget.status;
-
-  // 付款資訊
-  document.getElementById("editPayMethod").value = editTarget.payMethod;
-  document.getElementById("editBankCode").value = editTarget.bankCode;
-  document.getElementById("editDeposit").value = editTarget.deposit;
-  document.getElementById("editRemaining").value = editTarget.remaining;
-  document.getElementById("editPayStatus").value = editTarget.payStatus;
-
-  // 備註/註記
-  document.getElementById("editMark").value = editTarget.mark;
-  document.getElementById("editNote").value = editTarget.note;
-
-  document.getElementById("editModalBg").style.display = "flex";
-}
-
-function closeEdit() {
-  document.getElementById("editModalBg").style.display = "none";
-}
-
-function saveEdit() {
-  editTarget.name = document.getElementById("editName").value;
-  editTarget.phone = document.getElementById("editPhone").value;
-  editTarget.room = document.getElementById("editRoom").value;
-  editTarget.checkin = document.getElementById("editCheckin").value;
-  editTarget.checkout = document.getElementById("editCheckout").value;
-
-  editTarget.status = document.getElementById("editOrderStatus").value;
-
-  editTarget.payMethod = document.getElementById("editPayMethod").value;
-  editTarget.bankCode = document.getElementById("editBankCode").value;
-  editTarget.deposit = Number(document.getElementById("editDeposit").value);
-  editTarget.remaining = editTarget.remaining;
-  editTarget.payStatus = document.getElementById("editPayStatus").value;
-
-  editTarget.mark = document.getElementById("editMark").value;
-  editTarget.note = document.getElementById("editNote").value;
-
-  closeEdit();
   renderTable();
 }
 
-/* ---------- Initialize ---------- */
-renderTable();
+loadOrders();
+
+/* ----------------------------------------------------
+    搜尋 + 渲染
+---------------------------------------------------- */
+window.renderTable = function () {
+  const keyword = document.getElementById("searchInput").value.trim();
+
+  const tbody = document.getElementById("orderTable");
+  tbody.innerHTML = "";
+
+  orders
+    .filter(o =>
+      o.name.includes(keyword) ||
+      o.phone.includes(keyword) ||
+      o.roomTitle.includes(keyword)
+    )
+    .forEach(o => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${o.name}</td>
+        <td>${o.roomTitle}</td>
+        <td>${o.checkIn}</td>
+        <td>${o.checkOut}</td>
+        <td>$${o.priceTotal.toLocaleString()}</td>
+        <td>${payTag(o.paymentStatus)}</td>
+        <td>${statusTag(o.status)}</td>
+        <td>
+          <span class="material-icons btn-icon" onclick="editOrder('${o.id}')">edit</span>
+          <span class="material-icons btn-icon" onclick="deleteOrder('${o.id}')">delete</span>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+};
+
+/* ----------------------------------------------------
+    編輯訂單（填入 Modal）
+---------------------------------------------------- */
+window.editOrder = function (id) {
+  editingId = id;
+  const o = orders.find(x => x.id === id);
+
+  document.getElementById("m_name").value = o.name;
+  document.getElementById("m_phone").value = o.phone;
+  document.getElementById("m_email").value = o.email ?? "";
+
+  document.getElementById("m_paymentMethod").value = o.paymentMethod;
+  document.getElementById("m_paymentCode").value = o.paymentCode ?? "";
+  document.getElementById("m_paymentStatus").value = o.paymentStatus;
+
+  document.getElementById("m_status").value = o.status;
+
+  document.getElementById("m_mark").value = o.mark ?? "";
+  document.getElementById("m_note").value = o.note ?? "";
+
+  document.getElementById("modalBg").style.display = "flex";
+};
+
+/* ----------------------------------------------------
+    儲存訂單
+---------------------------------------------------- */
+window.saveOrder = async function () {
+  const ref = doc(db, "orders", editingId);
+
+  await updateDoc(ref, {
+    name: document.getElementById("m_name").value,
+    phone: document.getElementById("m_phone").value,
+    email: document.getElementById("m_email").value,
+
+    paymentMethod: document.getElementById("m_paymentMethod").value,
+    paymentCode: document.getElementById("m_paymentCode").value,
+    paymentStatus: document.getElementById("m_paymentStatus").value,
+
+    status: document.getElementById("m_status").value,
+    mark: document.getElementById("m_mark").value,
+    note: document.getElementById("m_note").value
+  });
+
+  closeModal();
+  loadOrders();
+};
+
+/* ----------------------------------------------------
+    刪除訂單
+---------------------------------------------------- */
+window.deleteOrder = async function (id) {
+  if (!confirm("要刪除此訂單？")) return;
+
+  await deleteDoc(doc(db, "orders", id));
+  loadOrders();
+};
+
+/* ----------------------------------------------------
+    關閉 Modal
+---------------------------------------------------- */
+window.closeModal = function () {
+  document.getElementById("modalBg").style.display = "none";
+};
 
 </script>
 
