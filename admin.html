@@ -69,52 +69,41 @@
   ＋
 </div>
 
+<script src="api.js"></script>
+
 <script>
 // 載入訂單
 async function loadBookings() {
-  const name  = document.getElementById("searchName").value.trim();
-  const phone = document.getElementById("searchPhone").value.trim();
+  const name  = document.getElementById("searchName").value;
+  const phone = document.getElementById("searchPhone").value;
   const date  = document.getElementById("searchDate").value;
 
-  try {
-    const bookings = await apiGet("?action=bookings");
+  const roomData = await apiGet("?action=rooms");
+  const rooms = roomData.rooms;
+  const roomMap = {};
+  rooms.forEach(r => roomMap[r.room_id] = r.name);
 
-    const roomList = await apiGet("/rooms");
-    const roomMap = {};
-    roomList.forEach(r => roomMap[r.room_id] = r.name);
+  const bookingData = await apiGet("?action=bookings");
+  let bookings = bookingData.bookings;
 
-    let filtered = bookings;
+  if (name)  bookings = bookings.filter(b => b.name.includes(name));
+  if (phone) bookings = bookings.filter(b => b.phone.includes(phone));
+  if (date)  bookings = bookings.filter(b => b.checkin === date);
 
-    if (name)  filtered = filtered.filter(b => b.name.includes(name));
-    if (phone) filtered = filtered.filter(b => b.phone.includes(phone));
-    if (date)  filtered = filtered.filter(b => b.checkin === date);
-
-    renderTable(filtered, roomMap);
-
-  } catch (e) {
-    console.error(e);
-    document.querySelector("#bookingTable tbody").innerHTML =
-      `<tr><td colspan="9" style="text-align:center;">載入失敗</td></tr>`;
-  }
+  renderBookings(bookings, roomMap);
 }
 
-// 渲染表格
-function renderTable(data, roomMap) {
+// 渲染 Table
+function renderBookings(list, roomMap) {
   const tbody = document.querySelector("#bookingTable tbody");
   tbody.innerHTML = "";
 
-  if (data.length === 0) {
+  if (list.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;">沒有資料</td></tr>`;
     return;
   }
 
-  data.forEach(b => {
-    const statusClass = {
-      confirmed: "status-confirmed",
-      pending: "status-pending",
-      cancelled: "status-cancelled"
-    }[b.status] || "status-pending";
-
+  list.forEach(b => {
     tbody.innerHTML += `
       <tr>
         <td>${b.order_id}</td>
@@ -124,52 +113,41 @@ function renderTable(data, roomMap) {
         <td>${b.checkin}</td>
         <td>${b.checkout}</td>
         <td>NT$ ${b.amount}</td>
-        <td><span class="status-tag ${statusClass}">${b.status}</span></td>
-
+        <td>${b.status}</td>
         <td>
-          <button class="btn-secondary" style="padding:6px 12px; font-size:14px;"
-                  onclick="updateStatus('${b.order_id}', 'confirmed')">確認</button>
-
-          <button class="btn-secondary" style="padding:6px 12px; font-size:14px;"
-                  onclick="updateStatus('${b.order_id}', 'cancelled')">取消</button>
-
-          <button class="btn-secondary" style="padding:6px 12px; font-size:14px; background:#EA4335; color:#fff;"
-                  onclick="deleteBooking('${b.order_id}')">刪除</button>
+          <button onclick="updateStatus('${b.order_id}', 'confirmed')">確認</button>
+          <button onclick="updateStatus('${b.order_id}', 'cancelled')">取消</button>
+          <button onclick="deleteBooking('${b.order_id}')">刪除</button>
         </td>
       </tr>
     `;
   });
 }
 
-// 更新訂單狀態
 async function updateStatus(orderId, status) {
-  if (!confirm(`確定將訂單 ${orderId} 標記為「${status}」？`)) return;
+  const res = await apiPost("?action=updateBooking", { order_id: orderId, status });
 
-  const res = await apiPost("/updateBooking", { order_id: orderId, status });
   if (res.success) {
-    alert("更新成功！");
+    alert("已更新！");
     loadBookings();
-  } else {
-    alert("更新失敗：" + res.message);
-  }
+  } else alert("更新失敗：" + res.message);
 }
 
-// 刪除訂單
 async function deleteBooking(orderId) {
-  if (!confirm(`確定要刪除訂單 ${orderId}?`)) return;
+  if (!confirm("確定要刪除？")) return;
 
-  const res = await apiPost("/deleteBooking", { order_id: orderId });
+  const res = await apiPost("?action=deleteBooking", { order_id: orderId });
+
   if (res.success) {
     alert("已刪除！");
     loadBookings();
-  } else {
-    alert("刪除失敗：" + res.message);
-  }
+  } else alert("刪除失敗：" + res.message);
 }
 
 // 預設載入
 loadBookings();
 </script>
+
 
 </body>
 </html>
