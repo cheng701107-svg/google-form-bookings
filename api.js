@@ -15,26 +15,21 @@ const API_BASE = "https://script.google.com/macros/s/AKfycbzZRykhI3HrwgaAxKoBu1W
 /* ---------------------------------------------------------
    ⭐ STEP 2：統一 GET 請求
    --------------------------------------------------------- */
-async function apiGet(path) {
-  const url = API_BASE + path;
-
-  try {
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      }
-    });
-
-    if (!res.ok) throw new Error("HTTP 錯誤：" + res.status);
-
-    return await res.json();
-
-  } catch (err) {
-    console.error("GET API 發生錯誤：", url, err);
-    throw err;
-  }
+asyncfunction apiGet(path) {
+  const url = `${API_BASE}${path}`;
+  return fetch(url)
+    .then(res => res.json());
 }
+
+function apiPost(path, data = {}) {
+  const url = `${API_BASE}${path}`;
+  return fetch(url, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" }
+  }).then(res => res.json());
+}
+
 
 
 /* ---------------------------------------------------------
