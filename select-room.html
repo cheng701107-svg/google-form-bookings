@@ -21,35 +21,32 @@
 
 </div>
 
+<script src="api.js"></script>
+
 <script>
 // 取得 Step1 存的資料
 const checkin = localStorage.getItem("checkin");
 const nights  = localStorage.getItem("nights");
-const adult   = localStorage.getItem("adult");
-const child   = localStorage.getItem("child");
-const pet     = localStorage.getItem("pet");
 
 if (!checkin || !nights) {
   alert("請先選擇入住日期");
   window.location.href = "index.html";
 }
 
-// DOM
 const roomList = document.getElementById("roomList");
 
 // 載入房型 + 房況
 async function loadRooms() {
   roomList.innerHTML = `
-    <div class="card">
-      <div class="card-title">載入中...</div>
-    </div>
+    <div class="card"><div class="card-title">載入中...</div></div>
   `;
 
   try {
-    // 取得房型資料
-    const rooms = await apiGet("?action=rooms");
+    // 房型列表
+    const roomData = await apiGet("?action=rooms");
+    const rooms = roomData.rooms;
 
-    // 取得房況
+    // 房況
     const avail = await apiGet(`?action=availability&date=${checkin}&nights=${nights}`);
 
     roomList.innerHTML = "";
@@ -59,14 +56,12 @@ async function loadRooms() {
 
       roomList.innerHTML += `
         <div class="room-card">
-          <img src="${room.image || 'assets/room-default.jpg'}" alt="Room Image">
-          
+          <img src="${room.image || 'assets/room-default.jpg'}">
           <div class="room-card-body">
             <div class="room-name">${room.name}</div>
             <div class="room-price">NT$ ${room.price} / 每晚</div>
-            <div style="margin-bottom: 12px; color:#5f6368;">剩餘 ${remain} 間</div>
+            <div style="color:#5f6368; margin-bottom:10px;">剩餘 ${remain} 間</div>
           </div>
-
           <div class="room-btn ${remain <= 0 ? 'disabled' : ''}"
                onclick="selectRoom('${room.room_id}', ${remain})">
             ${remain > 0 ? '選擇此房型' : '已無空房'}
@@ -87,14 +82,13 @@ async function loadRooms() {
 
 loadRooms();
 
-// 選擇房型
-function selectRoom(roomId, remain) {
+function selectRoom(id, remain) {
   if (remain <= 0) return;
-
-  localStorage.setItem("selected_room", roomId);
+  localStorage.setItem("selected_room", id);
   window.location.href = "booking-form.html";
 }
 </script>
+
 
 </body>
 </html>
