@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>填寫預約資料</title>
 
-<!-- LIFF -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
@@ -27,7 +26,6 @@
     margin-bottom: 14px;
   }
 
-  /* 卡片 */
   .card {
     background: #fff;
     border-radius: 14px;
@@ -37,7 +35,6 @@
     margin-bottom: 20px;
   }
 
-  /* 資訊 row */
   .info-row {
     margin-bottom: 10px;
     font-size: 15px;
@@ -52,7 +49,6 @@
     color: #333;
   }
 
-  /* Material 輸入欄位 */
   .input-group {
     margin-bottom: 18px;
   }
@@ -76,7 +72,6 @@
 
   textarea { height: 100px; resize: vertical; }
 
-  /* 下一步按鈕 */
   .submit-btn {
     width: 100%;
     background: #1a73e8;
@@ -87,6 +82,25 @@
     border-radius: 12px;
     cursor: pointer;
   }
+
+  /* 價格明細（Airbnb 風） */
+  .price-detail-box {
+    margin-top: 15px;
+    padding: 14px;
+    border-radius: 12px;
+    background: #f9fafc;
+    border: 1px solid #e0e0e0;
+  }
+  .price-detail-item {
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #444;
+  }
+  .price-detail-bold {
+    font-weight: 700;
+    color: #222;
+  }
+
 </style>
 
 </head>
@@ -97,8 +111,11 @@
 
   <div class="page-title">填寫預約資料</div>
 
-  <!-- 預約資訊 -->
+  <!-- 訂房資訊 -->
   <div class="card" id="infoBox"></div>
+
+  <!-- 每日價格明細 -->
+  <div class="card" id="dailyBox"></div>
 
   <!-- 表單 -->
   <div class="card">
@@ -155,12 +172,18 @@
 </div>
 
 <script>
-// ---- 取得網址參數 ----
+// ---- 取得 URL 參數 ----
 const params = new URLSearchParams(location.search);
 const roomId = params.get("roomId");
 const checkin = params.get("date");
 const checkout = params.get("checkout");
 const nights = params.get("nights");
+const dailyEncoded = params.get("daily");
+
+let dailyPrices = [];
+if (dailyEncoded) {
+  dailyPrices = JSON.parse(decodeURIComponent(dailyEncoded));
+}
 
 let roomData = null;
 
@@ -170,59 +193,81 @@ async function loadInfo() {
   const rooms = await res.json();
   roomData = rooms.find(r => r.id === roomId);
 
+  const total = dailyPrices.reduce((t, p) => t + p.price, 0);
+
   document.getElementById("infoBox").innerHTML = `
-      <div class="info-row"><span class="info-label">房型：</span><span class="info-value">${roomData.title}</span></div>
-      <div class="info-row"><span class="info-label">入住日期：</span><span class="info-value">${checkin}</span></div>
-      <div class="info-row"><span class="info-label">退房日期：</span><span class="info-value">${checkout}</span></div>
-      <div class="info-row"><span class="info-label">入住晚數：</span><span class="info-value">${nights} 晚</span></div>
-      <div class="info-row"><span class="info-label">總金額：</span><span class="info-value">$${(roomData.basePrice * nights).toLocaleString()}</span></div>
+    <div class="info-row"><span class="info-label">房型：</span><span class="info-value">${roomData.title}</span></div>
+    <div class="info-row"><span class="info-label">入住：</span><span class="info-value">${checkin}</span></div>
+    <div class="info-row"><span class="info-label">退房：</span><span class="info-value">${checkout}</span></div>
+    <div class="info-row"><span class="info-label">晚數：</span><span class="info-value">${nights} 晚</span></div>
+    <div class="info-row"><span class="info-label">總金額：</span><span class="info-value">$${total.toLocaleString()}</span></div>
   `;
+
+  // ---- 價格明細表 ----
+  let html = `<div class="price-detail-box">`;
+
+  dailyPrices.forEach(item => {
+    html += `
+      <div class="price-detail-item">
+        ${item.date} ${item.label}：
+        <span class="price-detail-bold">$${item.price.toLocaleString()}</span>
+      </div>`;
+  });
+
+  html += `</div>`;
+
+  document.getElementById("dailyBox").innerHTML = html;
 }
 
 loadInfo();
 
-// ---- Material UI：寵物切換 ----
+// ---- Material UI 寵物欄位 ----
 function togglePetCount() {
   document.getElementById("petCountBox").style.display =
     document.getElementById("petOption").value === "yes" ? "block" : "none";
 }
 
-// ---- 取得 LINE UID ----
+// ---- LINE UID ----
 async function initLIFF() {
   await liff.init({ liffId: "YOUR_LIFF_ID" });
   const profile = await liff.getProfile();
   document.getElementById("line_uid").value = profile.userId;
 }
-
 initLIFF();
-
 
 // ---- 送出預約 ----
 function submitBooking() {
+
+  const total = dailyPrices.reduce((t, p) => t + p.price, 0);
+
   const data = {
     roomId,
     checkin,
     checkout,
     nights,
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    email: document.getElementById("email").value,
-    adult: document.getElementById("adult").value,
-    child: document.getElementById("child").value,
-    pet: document.getElementById("petOption").value === "yes"
-          ? document.getElementById("petCount").value
-          : 0,
-    note: document.getElementById("note").value,
-    line_uid: document.getElementById("line_uid").value,
-    totalAmount: roomData.basePrice * nights
+    totalAmount: total,
+
+    customer: {
+      name: document.getElementById("name").value,
+      phone: document.getElementById("phone").value,
+      email: document.getElementById("email").value,
+      adult: document.getElementById("adult").value,
+      child: document.getElementById("child").value,
+      pet: document.getElementById("petOption").value === "yes"
+            ? document.getElementById("petCount").value
+            : 0,
+      note: document.getElementById("note").value,
+      line_uid: document.getElementById("line_uid").value
+    },
+
+    dailyPrices // ⭐ 重點：每日價格明細送到後端
   };
 
-  if (!data.name || !data.phone) {
+  if (!data.customer.name || !data.customer.phone) {
     alert("請填寫姓名與手機！");
     return;
   }
 
-  // 送到你的後端（Make.com / GAS）
   fetch("YOUR_API_ENDPOINT", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -232,10 +277,11 @@ function submitBooking() {
     window.location.href = "done.html";
   })
   .catch(err => {
-    alert("預約送出失敗，請稍後再試！");
+    alert("預約送出失敗！");
     console.error(err);
   });
 }
+
 </script>
 
 </body>
