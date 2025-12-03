@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>預約完成</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="style.css" />
+<script src="api.js"></script>
+</head>
+
+<body>
+
+<div class="header">預約成功</div>
+
+<div class="container">
+
+  <div class="card success-box">
+
+    <div class="success-icon">✔</div>
+
+    <h2 style="margin-top:20px;">您的預約已完成！</h2>
+
+    <p style="color:#5f6368;">
+      感謝您的預約，我們已收到您的訂單。
+    </p>
+
+    <div id="summaryBox" style="margin-top: 30px; text-align:left;"></div>
+
+    <button class="btn" style="margin-top:30px;" onclick="goHome()">
+      返回首頁
+    </button>
+
+  </div>
+
+</div>
+
+<script>
+// 讀取 localStorage
+const orderId  = localStorage.getItem("order_id");
+const roomId   = localStorage.getItem("selected_room");
+const checkin  = localStorage.getItem("checkin");
+const nights   = Number(localStorage.getItem("nights"));
+const adult    = localStorage.getItem("adult");
+const child    = localStorage.getItem("child");
+const pet      = localStorage.getItem("pet");
+
+// 沒訂單 → 回首頁
+if (!orderId) {
+  alert("查無訂單資訊");
+  window.location.href = "index.html";
+}
+
+// 計算退房日
+function addDays(dateStr, days) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
+const checkout = addDays(checkin, nights);
+
+// DOM
+const summaryBox = document.getElementById("summaryBox");
+
+// 載入房型資訊以顯示摘要
+async function loadSummary() {
+  const rooms = await apiGet("/rooms");
+  const room = rooms.find(r => r.room_id == roomId);
+
+  const amount = room.price * nights;
+
+  summaryBox.innerHTML = `
+    <div class="card" style="box-shadow:none; padding:0;">
+
+      <div style="margin-bottom:12px;">
+        <b>訂單編號：</b> ${orderId}
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <b>房型：</b> ${room.name}
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <b>入住日期：</b> ${checkin}
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <b>退房日期：</b> ${checkout}
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <b>夜數：</b> ${nights} 晚
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <b>人數：</b> 成人 ${adult}、小孩 ${child}、寵物 ${pet}
+      </div>
+
+      <div style="color:#1A73E8; font-size:20px; margin-top:10px;">
+        <b>總金額：NT$ ${amount}</b>
+      </div>
+
+    </div>
+  `;
+}
+
+loadSummary();
+
+// 返回首頁
+function goHome() {
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
