@@ -98,49 +98,20 @@
 </div>
 
 <script>
-// ---- 取得網址參數 ----
+const API = "https://script.google.com/macros/s/AKfycbx72JGTk3CuJe-z4AFdFm6N1OPJO0aIXq0fgjHY0DN1lCq7iHUtgEZu-YB7fiPP1t2J/exec";
+
 const params = new URLSearchParams(location.search);
-const roomId   = params.get("roomId");
-const date     = params.get("date");
-const nights   = params.get("nights");
+const roomId = params.get("roomId");
+const date = params.get("date");
+const nights = params.get("nights");
 const checkout = params.get("checkout");
 
-// ---- 渲染房型資訊 ----
-async function loadInfo() {
-  const res = await fetch("data/rooms.json");
-  const rooms = await res.json();
-  const room = rooms.find(r => r.id === roomId);
-
-  document.getElementById("info").innerHTML = `
-    <div class="label">房型</div>
-    <div class="value">${room.title}</div>
-
-    <div class="label">入住日期</div>
-    <div class="value">${date}</div>
-
-    <div class="label">退房日期</div>
-    <div class="value">${checkout}</div>
-
-    <div class="label">入住晚數</div>
-    <div class="value">${nights} 晚</div>
-
-    <div class="label">總金額</div>
-    <div class="value">$${(room.price * nights).toLocaleString()}</div>
-  `;
+function togglePetCount() {
+  const isPet = document.getElementById("petOption").value;
+  document.getElementById("petCountBox").style.display =
+    isPet === "yes" ? "block" : "none";
 }
 
-// ---- 初始化 LIFF，取得 userId ----
-async function initLIFF() {
-  await liff.init({ liffId: "YOUR_LIFF_ID" });
-  const profile = await liff.getProfile();
-  document.getElementById("line_uid").value = profile.userId;
-}
-
-initLIFF();
-loadInfo();
-
-
-// ---- 送出預約 ----
 function submitBooking() {
   const data = {
     roomId,
@@ -149,6 +120,11 @@ function submitBooking() {
     nights,
     name: document.getElementById("name").value,
     phone: document.getElementById("phone").value,
+    adult: document.getElementById("adult").value,
+    child: document.getElementById("child").value,
+    pet: document.getElementById("petOption").value === "yes"
+          ? document.getElementById("petCount").value
+          : 0,
     note: document.getElementById("note").value,
     line_uid: document.getElementById("line_uid").value
   };
@@ -158,22 +134,24 @@ function submitBooking() {
     return;
   }
 
-  // 送到你的後端（Make.com / GAS）
-  fetch("YOUR_API_ENDPOINT", {
+  fetch(`${API}?action=createOrder`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   })
-  .then(() => {
-    // 導向完成頁
-    window.location.href = "done.html";
+  .then(res => res.json())
+  .then(json => {
+    if (json.success) {
+      window.location.href = "done.html";
+    } else {
+      alert("預約失敗：" + json.message);
+    }
   })
   .catch(err => {
     alert("預約送出失敗，請稍後再試！");
     console.error(err);
   });
 }
-
 </script>
 
 </body>
