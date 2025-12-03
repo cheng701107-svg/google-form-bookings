@@ -47,10 +47,10 @@ async function loadRooms() {
 
   try {
     // 取得房型資料
-    const rooms = await apiGet("/rooms");
+    const rooms = await apiGet("?action=rooms");
 
     // 取得房況
-    const avail = await apiGet(`/availability?date=${checkin}&nights=${nights}`);
+    const avail = await apiGet(`?action=availability&date=${checkin}&nights=${nights}`);
 
     roomList.innerHTML = "";
 
