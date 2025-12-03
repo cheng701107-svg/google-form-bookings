@@ -1,56 +1,124 @@
-<script>
-const API = "https://script.google.com/macros/s/AKfycbx72JGTk3CuJe-z4AFdFm6N1OPJO0aIXq0fgjHY0DN1lCq7iHUtgEZu-YB7fiPP1t2J/exec";
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>選擇房型</title>
+<link rel="stylesheet" href="assets/style.css">
 
-const params = new URLSearchParams(location.search);
-const roomId = params.get("roomId");
-const date = params.get("date");
-const nights = params.get("nights");
-const checkout = params.get("checkout");
-
-function togglePetCount() {
-  const isPet = document.getElementById("petOption").value;
-  document.getElementById("petCountBox").style.display =
-    isPet === "yes" ? "block" : "none";
-}
-
-function submitBooking() {
-  const data = {
-    roomId,
-    date,
-    checkout,
-    nights,
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    adult: document.getElementById("adult").value,
-    child: document.getElementById("child").value,
-    pet: document.getElementById("petOption").value === "yes"
-          ? document.getElementById("petCount").value
-          : 0,
-    note: document.getElementById("note").value,
-    line_uid: document.getElementById("line_uid").value
-  };
-
-  if (!data.name || !data.phone) {
-    alert("請填寫姓名與手機！");
-    return;
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "Noto Sans TC", sans-serif;
+    background: #f5f5f5;
   }
 
-  fetch(`${API}?action=createOrder`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  })
-  .then(res => res.json())
-  .then(json => {
-    if (json.success) {
-      window.location.href = "done.html";
-    } else {
-      alert("預約失敗：" + json.message);
-    }
-  })
-  .catch(err => {
-    alert("預約送出失敗，請稍後再試！");
-    console.error(err);
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .room-card {
+    background: #fff;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    cursor: pointer;
+    border: 1px solid #e6e6e6;
+    transition: 0.15s;
+  }
+
+  .room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 2px 10px rgba(0,0,0,0.08);
+  }
+
+  .room-image {
+    width: 110px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #ddd;
+  }
+
+  .room-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .room-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .room-price {
+    font-size: 15px;
+    color: #1a73e8;
+    font-weight: 600;
+  }
+
+  .room-nights {
+    font-size: 14px;
+    color: #777;
+    margin-top: 6px;
+  }
+</style>
+
+</head>
+
+<body>
+<div class="container">
+  <div class="title">選擇預約房型</div>
+
+  <div id="roomList"></div>
+</div>
+
+<script>
+async function loadRooms() {
+  const res = await fetch("data/rooms.json");
+  const rooms = await res.json();
+
+  const list = document.getElementById("roomList");
+
+  rooms.forEach(room => {
+    const card = document.createElement("div");
+    card.className = "room-card";
+
+    card.onclick = () => {
+      // 導向下一頁（選日期）
+      window.location.href = `select-date.html?roomId=${room.id}`;
+    };
+
+    card.innerHTML = `
+      <img src="${room.image}" class="room-image">
+      <div class="room-info">
+        <div>
+          <div class="room-title">${room.title}</div>
+          <div class="room-price">$${room.price.toLocaleString()} / 每晚</div>
+        </div>
+        <div class="room-nights">可住：${room.minNights} - ${room.maxNights} 晚</div>
+      </div>
+    `;
+
+    list.appendChild(card);
   });
 }
+
+loadRooms();
 </script>
+
+</body>
+</html>
