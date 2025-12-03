@@ -77,7 +77,7 @@ async function loadBookings() {
   const date  = document.getElementById("searchDate").value;
 
   try {
-    const bookings = await apiGet("/bookings");
+    const bookings = await apiGet("?action=bookings");
 
     const roomList = await apiGet("/rooms");
     const roomMap = {};
