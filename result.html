@@ -34,82 +34,47 @@
 
 </div>
 
-<script>
-// 讀取 localStorage
-const orderId  = localStorage.getItem("order_id");
-const roomId   = localStorage.getItem("selected_room");
-const checkin  = localStorage.getItem("checkin");
-const nights   = Number(localStorage.getItem("nights"));
-const adult    = localStorage.getItem("adult");
-const child    = localStorage.getItem("child");
-const pet      = localStorage.getItem("pet");
+<script src="api.js"></script>
 
-// 沒訂單 → 回首頁
+<script>
+const orderId = localStorage.getItem("order_id");
+const roomId  = localStorage.getItem("selected_room");
+const checkin = localStorage.getItem("checkin");
+const nights  = Number(localStorage.getItem("nights"));
+
 if (!orderId) {
-  alert("查無訂單資訊");
+  alert("查無訂單資料");
   window.location.href = "index.html";
 }
 
-// 計算退房日
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split("T")[0];
-}
 const checkout = addDays(checkin, nights);
-
-// DOM
 const summaryBox = document.getElementById("summaryBox");
 
-// 載入房型資訊以顯示摘要
 async function loadSummary() {
-  const rooms = await apiGet("/rooms");
-  const room = rooms.find(r => r.room_id == roomId);
+  const res = await apiGet("?action=rooms");
+  const room = res.rooms.find(r => r.room_id == roomId);
 
   const amount = room.price * nights;
 
   summaryBox.innerHTML = `
-    <div class="card" style="box-shadow:none; padding:0;">
-
-      <div style="margin-bottom:12px;">
-        <b>訂單編號：</b> ${orderId}
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <b>房型：</b> ${room.name}
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <b>入住日期：</b> ${checkin}
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <b>退房日期：</b> ${checkout}
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <b>夜數：</b> ${nights} 晚
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <b>人數：</b> 成人 ${adult}、小孩 ${child}、寵物 ${pet}
-      </div>
-
-      <div style="color:#1A73E8; font-size:20px; margin-top:10px;">
-        <b>總金額：NT$ ${amount}</b>
-      </div>
-
+    <div style="margin-bottom:12px;"><b>訂單編號：</b>${orderId}</div>
+    <div style="margin-bottom:12px;"><b>房型：</b>${room.name}</div>
+    <div style="margin-bottom:12px;"><b>入住：</b>${checkin}</div>
+    <div style="margin-bottom:12px;"><b>退房：</b>${checkout}</div>
+    <div style="margin-bottom:12px;"><b>夜數：</b>${nights}</div>
+    <div style="margin-bottom:12px; color:#1A73E8; font-size:20px;">
+      <b>總金額：NT$ ${amount}</b>
     </div>
   `;
 }
 
 loadSummary();
 
-// 返回首頁
 function goHome() {
   window.location.href = "index.html";
 }
 </script>
+
 
 </body>
 </html>
