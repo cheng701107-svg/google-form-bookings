@@ -6,170 +6,161 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-  body {
-    font-family: "Noto Sans TC", sans-serif;
-    background: #f7f7f7;
-    margin: 0;
-  }
+body{
+  font-family:"Noto Sans TC",sans-serif;
+  background:#f7f7f7;
+  margin:0;
+}
 
-  /* ====== 置中統一頁面寬度 ====== */
-  .page-container {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 28px 18px;
-  }
+/* === 主容器 ｜ 全站統一寬度 === */
+.page-container{
+  width:100%;
+  max-width:660px;      /* ← 與表單頁統一 */
+  margin:auto;
+  padding:28px 18px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
 
-  h2 {
-    font-size: 26px;
-    font-weight: 800;
-    text-align: center;
-    margin-bottom: 26px;
-  }
+h2{
+  font-size:26px;
+  font-weight:800;
+  text-align:center;
+  margin-bottom:26px;
+  width:100%;
+}
 
-  /* ====== 入住晚數選項 ====== */
-  .night-row {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 18px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 18px;
-    margin: 14px auto;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    transition: 0.15s;
-    max-width: 760px;
-  }
+/* === 每一晚選項 === */
+.night-row{
+  width:100%;               /* ⚠ 關鍵：不再偏左 */
+  max-width:660px;
+  background:#fff;
+  border-radius:14px;
+  padding:18px 22px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:18px;
+  margin-bottom:14px;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,0.06);
+  transition:.16s;
+  box-sizing:border-box;
+}
 
-  .night-row:hover { transform: scale(1.02); }
-  .night-row.selected {
-    border-left: 5px solid #1a73e8;
-    background: #eaf4ff;
-  }
+.night-row:hover{ transform:scale(1.02); }
 
-  .price {
-    font-weight: 700;
-    color: #0b7d2b;
-    font-size: 18px;
-  }
+.night-row.selected{
+  background:#eaf4ff;
+  border-left:5px solid #1a73e8;
+}
 
-  /* ====== 下一步按鈕 ====== */
-  .btn {
-    width: 100%;
-    max-width: 760px;
-    background: #1a73e8;
-    color: #fff;
-    padding: 18px;
-    text-align: center;
-    border-radius: 12px;
-    font-size: 20px;
-    font-weight: 700;
-    margin: 40px auto 0;
-    cursor: pointer;
-    transition: 0.18s;
-  }
+.price{
+  font-weight:700;
+  color:#0b7d2b;
+  font-size:18px;
+}
 
-  .btn:hover { opacity: .85; }
-
-  /* ====== 手機自適應 ====== */
-  @media(max-width:600px) {
-    .night-row { font-size:17px; padding:15px; }
-    .price { font-size:17px; }
-  }
+/* === 下一步按鈕一致版 === */
+.btn{
+  width:100%;
+  max-width:660px;
+  background:#1a73e8;
+  color:#fff;
+  padding:18px;
+  border-radius:12px;
+  font-size:20px;
+  font-weight:800;
+  text-align:center;
+  cursor:pointer;
+  margin-top:30px;
+  transition:.18s;
+}
+.btn:hover{opacity:.86;}
 </style>
 </head>
+
 <body>
 
 <div class="page-container">
 
   <h2 id="title">選擇入住天數</h2>
 
-  <div id="nightContainer"></div>
+  <div id="nightContainer" style="width:100%;"></div>
 
-  <div class="btn" id="nextBtn">下一步 → 填寫資料</div>
+  <div class="btn" id="nextBtn">下一步 ➜ 填寫資料</div>
 
-</div><!-- END container -->
-
+</div><!-- container end -->
 
 <script>
-/* ====== 取得網址參數 ====== */
-const params = new URLSearchParams(location.search);
-const roomId = params.get("roomId");
-const startDate = params.get("date");
+/* 參數 */
+const params=new URLSearchParams(location.search);
+const roomId=params.get("roomId");
+const startDate=params.get("date");
 
-let room = null;
-let selectedNights = null;
+let room=null,selectedNights=null;
 
-/* ====== 讀取 rooms.json ====== */
+/* 載入房型資料 */
 loadRoomData();
 async function loadRoomData(){
-  try{
-    const res = await fetch("data/rooms.json");
-    const rooms = await res.json();
-    room = rooms.find(r => r.id===roomId);
+  const res=await fetch("data/rooms.json");
+  const rooms=await res.json();
+  room=rooms.find(r=>r.id===roomId);
+  if(!room){ alert("房型不存在");return; }
 
-    if(!room){
-      document.body.innerHTML = "<h3>❗ 房型資料不存在</h3>";
-      return;
-    }
-
-    document.getElementById("title").innerText = `選擇入住天數（${room.title}）`;
-    renderOptions();
-
-  }catch(err){
-    alert("無法載入房型資料（rooms.json）");
-  }
+  document.getElementById("title").innerText=`選擇入住天數（${room.title}）`;
+  renderOptions();
 }
 
-/* ====== 生成晚數列表 ====== */
+/* 生成可選晚數 */
 function renderOptions(){
-  const container = document.getElementById("nightContainer");
-  container.innerHTML = "";
+  const box=document.getElementById("nightContainer");
+  box.innerHTML="";
 
   for(let n=room.minNights;n<=room.maxNights;n++){
-    let total = calcTotalPrice(n);
+    const total=calcTotalPrice(n);
 
-    const row = document.createElement("div");
+    const row=document.createElement("div");
     row.className="night-row";
     row.innerHTML=`
-      <div>${n} 晚住宿</div>
-      <div class="price">$${total.toLocaleString()}</div>
+      <span>${n} 晚住宿</span>
+      <span class="price">$${total.toLocaleString()}</span>
     `;
 
-    row.onclick = ()=>{
+    row.onclick=()=>{
       selectedNights=n;
       document.querySelectorAll(".night-row")
         .forEach(e=>e.classList.remove("selected"));
       row.classList.add("selected");
     };
 
-    container.appendChild(row);
+    box.appendChild(row);
   }
 }
 
-/* ====== 金額計算 ====== */
+/* 計算金額 */
 function calcTotalPrice(nights){
   let total=0;
-  const d = new Date(startDate);
+  const base=new Date(startDate);
 
   for(let i=0;i<nights;i++){
-    const date=new Date(d);
-    date.setDate(d.getDate()+i);
+    const d=new Date(base);
+    d.setDate(base.getDate()+i);
 
-    const dayKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 
-    if(room.specialPrice && room.specialPrice[dayKey]){ total+=room.specialPrice[dayKey]; continue; }
+    if(room.specialPrice && room.specialPrice[k]){ total+=room.specialPrice[k];continue; }
 
-    const w=date.getDay();
-    total += (w===0||w===6) ? room.priceWeekend : room.priceWeekday;
+    total+=([0,6].includes(d.getDay())?room.priceWeekend:room.priceWeekday);
   }
   return total;
 }
 
-/* ====== 下一步 ====== */
+/* 下一步 */
 document.getElementById("nextBtn").onclick=()=>{
-  if(!selectedNights) return alert("請先選擇住宿天數");
+  if(!selectedNights) return alert("請先選擇天數");
   location.href=`form.html?roomId=${roomId}&date=${startDate}&nights=${selectedNights}`;
 };
 </script>
