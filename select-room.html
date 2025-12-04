@@ -1,65 +1,98 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>選擇房型</title>
-<link rel="stylesheet" href="style.css">
-<script src="api.js"></script> <!-- 你的 API 連線層 -->
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="style.css" />
+
+<script src="api.js"></script> <!-- 連接 GAS API -->
 </head>
 
 <body>
 
-<header>選擇房型</header>
+<div class="header">選擇房型</div>
 
-<div class="room-list" id="roomList">載入中…</div>
+<div class="container" id="roomList">
 
+  <div class="card">
+    <div class="card-title">正在載入房型資訊...</div>
+  </div>
+
+</div>
 
 <script>
-/* 讀取房型資料 */
-loadRooms();
+// 取得 Step1 存的資料
+const checkin = localStorage.getItem("checkin");
+const nights  = localStorage.getItem("nights");
+const adult   = localStorage.getItem("adult");
+const child   = localStorage.getItem("child");
+const pet     = localStorage.getItem("pet");
 
-async function loadRooms(){
-  try{
-    const res = await getRooms(); // <-- api.js 取得 GAS Rooms
-    renderRoomList(res.rooms);
-  }catch(e){
-    document.querySelector("#roomList").innerHTML = 
-      `<div style="text-align:center;color:#666;padding:60px 0;">資料載入失敗，請稍後再試</div>`;
+if (!checkin || !nights) {
+  alert("請先選擇入住日期");
+  window.location.href = "index.html";
+}
+
+// DOM
+const roomList = document.getElementById("roomList");
+
+// 載入房型 + 房況
+async function loadRooms() {
+  roomList.innerHTML = `
+    <div class="card">
+      <div class="card-title">載入中...</div>
+    </div>
+  `;
+
+  try {
+    // 取得房型資料
+    const rooms = await apiGet("/rooms");
+
+    // 取得房況
+    const avail = await apiGet(`/availability?date=${checkin}&nights=${nights}`);
+
+    roomList.innerHTML = "";
+
+    rooms.forEach(room => {
+      const remain = avail[room.room_id] || 0;
+
+      roomList.innerHTML += `
+        <div class="room-card">
+          <img src="${room.image || 'assets/room-default.jpg'}" alt="Room Image">
+          
+          <div class="room-card-body">
+            <div class="room-name">${room.name}</div>
+            <div class="room-price">NT$ ${room.price} / 每晚</div>
+            <div style="margin-bottom: 12px; color:#5f6368;">剩餘 ${remain} 間</div>
+          </div>
+
+          <div class="room-btn ${remain <= 0 ? 'disabled' : ''}"
+               onclick="selectRoom('${room.room_id}', ${remain})">
+            ${remain > 0 ? '選擇此房型' : '已無空房'}
+          </div>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    console.error(err);
+    roomList.innerHTML = `
+      <div class="card">
+        <div class="card-title">資料載入失敗，請稍後再試</div>
+      </div>
+    `;
   }
 }
 
-/* 產生房型卡片 UI */
-function renderRoomList(list){
-  const box = document.querySelector("#roomList");
-  box.innerHTML = "";
+loadRooms();
 
-  list.forEach(r => {
-    let remain = r.stock || 0;
+// 選擇房型
+function selectRoom(roomId, remain) {
+  if (remain <= 0) return;
 
-    box.innerHTML += `
-    <div class="card">
-      <img class="card-img" src="${r.image}" alt="${r.name}">
-
-      <div class="card-body">
-        <div class="room-name">${r.name}</div>
-        <div class="room-price">NT$${r.price}/晚</div>
-
-        <div class="room-btn" onclick="selectRoom('${r.room_id}','${r.name}',${r.price})">
-          ${ remain > 0 ? "選擇此房型" : "已額滿" }
-        </div>
-      </div>
-    </div>
-    `;
-  });
-}
-
-/* 點擊寫入 localStorage → 進入下一步 */
-function selectRoom(id,name,price){
-  localStorage.setItem("room_id",id);
-  localStorage.setItem("room_name",name);
-  localStorage.setItem("room_price",price);
-
-  location.href="booking-form.html";
+  localStorage.setItem("selected_room", roomId);
+  window.location.href = "booking-form.html";
 }
 </script>
 
