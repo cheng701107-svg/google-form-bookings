@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>預約完成</title>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    font-family: "Noto Sans TC", sans-serif;
+    background: #f5f5f5;
+    text-align: center;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .check-icon {
+    font-size: 80px;
+    color: #1a73e8;
+    margin-top: 40px;
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+
+  .sub {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 30px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    font-size: 17px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: #fff;
+    color: #1a73e8;
+    border: 1px solid #1a73e8;
+    font-size: 17px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .countdown {
+    margin-top: 20px;
+    color: #777;
+    font-size: 14px;
+  }
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="check-icon">✔</div>
+
+  <div class="title">預約已成功送出</div>
+  <div class="sub">我們已收到您的預約，稍後將會與您聯繫確認。</div>
+
+  <button class="btn" onclick="backToLINE()">返回 LINE</button>
+  <button class="btn-secondary" onclick="goHome()">回首頁</button>
+
+  <div class="countdown" id="countdownBox">3 秒後將自動返回 LINE…</div>
+
+</div>
+
+<script>
+async function init() {
+  await liff.init({ liffId: "YOUR_LIFF_ID" });
+}
+
+// 返回 LINE
+function backToLINE() {
+  if (liff.isInClient()) {
+    liff.closeWindow();
+  } else {
+    alert("請在 LINE 中開啟以自動回到對話視窗");
+  }
+}
+
+// 回首頁
+function goHome() {
+  window.location.href = "index.html";
+}
+
+// 自動倒數返回 LINE
+let sec = 3;
+let interval = setInterval(() => {
+  sec--;
+  document.getElementById("countdownBox").innerText = `${sec} 秒後將自動返回 LINE…`;
+
+  if (sec === 0) {
+    clearInterval(interval);
+    backToLINE();
+  }
+}, 1000);
+
+init();
+</script>
+
+</body>
+</html>
