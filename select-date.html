@@ -9,48 +9,58 @@
   body {
     margin: 0;
     font-family: "Noto Sans TC", sans-serif;
-    background: #f5f5f5;
+    background: #f7f7f7;
   }
 
-  .container {
-    max-width: 700px;
+  /* ======== 置中頁面寬度 ======== */
+  .page-container {
+    max-width: 760px;
     margin: 0 auto;
-    padding: 16px;
+    padding: 26px 18px;
   }
 
   .title {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 12px;
+    font-size: 26px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 25px;
   }
 
+  /* ======== 月曆框 ======== */
   .calendar-box {
     background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    border: 1px solid #e6e6e6;
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px solid #e3e3e3;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    max-width: 760px;
+    margin: 0 auto;
   }
 
   .calendar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
   }
 
   .month-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
   }
 
   .nav-btn {
-    background: none;
+    background: #1a73e8;
     border: none;
-    font-size: 20px;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 15px;
     cursor: pointer;
-    padding: 4px 10px;
-    color: #1a73e8;
+    transition: 0.15s;
   }
+
+  .nav-btn:hover { opacity: .85; }
 
   .week-row, .date-row {
     display: grid;
@@ -62,44 +72,48 @@
   .week-name {
     font-size: 14px;
     font-weight: 600;
-    color: #555;
+    color: #444;
   }
 
   .date-cell {
-    padding: 8px 0;
+    padding: 10px 0;
     font-size: 15px;
+    border-radius: 8px;
+    transition: .15s;
     cursor: pointer;
   }
 
+  /* 禁選(過去) */
   .date-disabled {
-    color: #ccc;
+    color: #cfcfcf !important;
     cursor: not-allowed;
   }
 
-  .date-active {
-    width: 36px;
-    height: 36px;
-    line-height: 36px;
-    margin: 0 auto;
-    border-radius: 50%;
-    background: #1a73e8;
-    color: #fff;
+  /* 滑過 */
+  .date-cell:hover:not(.date-disabled) {
+    background: #e9f2ff;
     font-weight: 600;
   }
-</style>
 
+  /* 手機 RWD */
+  @media(max-width:600px) {
+    .calendar-box { padding:14px; }
+    .month-title { font-size:18px; }
+  }
+</style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="page-container">
+
   <div class="title">選擇入住日期</div>
 
   <div class="calendar-box">
     <div class="calendar-header">
-      <button class="nav-btn" onclick="prevMonth()">‹</button>
+      <button class="nav-btn" onclick="prevMonth()">上一頁</button>
       <div class="month-title" id="monthTitle"></div>
-      <button class="nav-btn" onclick="nextMonth()">›</button>
+      <button class="nav-btn" onclick="nextMonth()">下一頁</button>
     </div>
 
     <div class="week-row">
@@ -114,78 +128,66 @@
 
     <div id="dates"></div>
   </div>
-</div>
+
+</div> <!-- END container -->
 
 <script>
 let current = new Date();
 let roomId = new URLSearchParams(location.search).get("roomId");
 
-// 渲染月曆
 function renderCalendar() {
   const year = current.getFullYear();
   const month = current.getMonth();
 
-  document.getElementById("monthTitle").innerText = `${year} 年 ${month + 1} 月`;
+  document.getElementById("monthTitle").innerText = `${year} 年 ${month+1} 月`;
 
   const dates = document.getElementById("dates");
   dates.innerHTML = "";
 
   const firstDay = new Date(year, month, 1).getDay();
-  const totalDays = new Date(year, month + 1, 0).getDate();
+  const totalDays = new Date(year, month+1, 0).getDate();
 
-  // 加入空白（本月第一天前）
   let row = document.createElement("div");
   row.className = "date-row";
 
-  for (let i = 0; i < firstDay; i++) {
+  for(let i=0;i<firstDay;i++){
     const cell = document.createElement("div");
     cell.className = "date-cell";
     row.append(cell);
   }
 
-  // 日期
-  for (let d = 1; d <= totalDays; d++) {
-    if (row.children.length === 7) {
+  for (let d=1; d<=totalDays; d++){
+    if(row.children.length===7){
       dates.append(row);
-      row = document.createElement("div");
-      row.className = "date-row";
+      row=document.createElement("div");
+      row.className="date-row";
     }
 
     const cell = document.createElement("div");
-    cell.className = "date-cell";
+    cell.className="date-cell";
+    const dateObj = new Date(year,month,d);
     const today = new Date();
-    const dateObj = new Date(year, month, d);
 
-    // 過去的日期不能選
-    if (dateObj < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+    if(dateObj < new Date(today.getFullYear(),today.getMonth(),today.getDate())){
       cell.classList.add("date-disabled");
-      cell.innerText = d;
+      cell.innerText=d;
     } else {
-      cell.innerText = d;
-      cell.onclick = () => selectDate(year, month + 1, d);
-      cell.classList.add("date-active-hover");
+      cell.innerText=d;
+      cell.onclick = () => selectDate(year,month+1,d);
     }
-
     row.append(cell);
   }
 
   dates.append(row);
 }
 
-function selectDate(y, m, d) {
-  const date = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  window.location.href = `select-nights.html?roomId=${roomId}&date=${date}`;
+function selectDate(y,m,d){
+  const date = `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  location.href = `select-nights.html?roomId=${roomId}&date=${date}`;
 }
 
-function prevMonth() {
-  current.setMonth(current.getMonth() - 1);
-  renderCalendar();
-}
-
-function nextMonth() {
-  current.setMonth(current.getMonth() + 1);
-  renderCalendar();
-}
+function prevMonth(){ current.setMonth(current.getMonth()-1); renderCalendar(); }
+function nextMonth(){ current.setMonth(current.getMonth()+1); renderCalendar(); }
 
 renderCalendar();
 </script>
