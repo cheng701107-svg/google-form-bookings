@@ -10,87 +10,102 @@
     font-family: "Noto Sans TC", sans-serif;
     background: #fafafa;
     margin: 0;
+    padding: 0;
   }
 
-  .page-wrapper {
-    max-width: 720px;
+  /* ======== 全頁寬度統一 ======== */
+  .page-container {
+    max-width: 760px;  /*📌 你覺得太寬我可縮到 720/650 */
     margin: 0 auto;
-    padding: 20px 16px;
+    padding: 25px 15px;
   }
 
   h2 {
-    font-size: 22px;
-    margin-bottom: 20px;
+    font-size: 26px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 25px;
   }
 
+  /* ======== 房型卡片 ======== */
   .room-card {
-    background: #ffffff;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 15px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
     display: flex;
-    gap: 15px;
+    gap: 14px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
     transition: 0.2s;
+    margin: 0 auto 18px;
+    max-width: 100%;
   }
 
   .room-card:hover {
-    transform: scale(1.01);
+    transform: scale(1.02);
   }
 
   .room-img {
-    width: 120px;
-    height: 90px;
-    object-fit: cover;
+    width: 130px;
+    height: 95px;
     border-radius: 10px;
+    object-fit: cover;
   }
 
   .room-title {
-    font-size: 18px;
+    font-size: 19px;
     font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .room-subtitle {
     font-size: 14px;
     color: #666;
+    margin-bottom: 6px;
   }
 
   .room-price {
-    margin-top: 8px;
-    font-size: 16px;
-    color: #0b8a27;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: bold;
+    color: #06782e;
+    margin-top: 4px;
   }
 
   .room-nights {
     font-size: 13px;
-    color: #888;
+    color: #777;
+    margin-top: 2px;
+  }
+
+  /* ======== 手機調整 ======== */
+  @media(max-width:600px) {
+    .room-card { flex-direction: column; text-align:center; }
+    .room-img { width:100%; height:160px; }
   }
 </style>
 </head>
 
 <body>
 
-<div class="page-wrapper">
-  <h2>選擇住宿房型</h2>
-  <div id="roomList"></div>
-</div>
+<div class="page-container">
+
+<h2>選擇住宿房型</h2>
+
+<div id="roomList"></div>
+
+</div> <!-- container -->
 
 <script>
 async function loadRooms() {
   try {
     const res = await fetch("data/rooms.json");
     const rooms = await res.json();
-
     const list = document.getElementById("roomList");
 
     rooms.forEach(room => {
+      const price = room.priceWeekday ?? room.priceWeekend ?? 0;
       const card = document.createElement("div");
       card.className = "room-card";
-
-      const mainPrice = room.priceWeekday ?? room.priceWeekend ?? 0;
 
       card.onclick = () => {
         window.location.href = `select-date.html?roomId=${room.id}`;
@@ -102,21 +117,18 @@ async function loadRooms() {
         <div style="flex:1">
           <div class="room-title">${room.title}</div>
           <div class="room-subtitle">${room.subtitle ?? ''}</div>
-
-          <div class="room-price">$${Number(mainPrice).toLocaleString()} 起</div>
-          <div class="room-nights">可入住：${room.minNights}-${room.maxNights} 晚</div>
+          <div class="room-price">$${Number(price).toLocaleString()} 起</div>
+          <div class="room-nights">${room.minNights}-${room.maxNights} 晚可訂</div>
         </div>
       `;
 
       list.appendChild(card);
     });
-  } catch (err) {
-    console.error("載入 rooms.json 失敗", err);
-    document.getElementById("roomList").innerHTML =
-      "<p>無法載入房型資料。</p>";
+
+  } catch(err) {
+    document.getElementById("roomList").innerHTML = "<p>❗ 無法載入房型資料</p>";
   }
 }
-
 loadRooms();
 </script>
 
