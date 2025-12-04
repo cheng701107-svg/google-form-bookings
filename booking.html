@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XXX民宿線上預訂</title>
+
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/booking.js" defer></script>
+
+</head>
+<body>
+
+<header class="topbar">XXX民宿｜線上預訂</header>
+
+<div class="form-box">
+
+  <h2>選擇房型</h2>
+  <select id="roomSelect"></select>
+
+  <h2>入住日期</h2>
+  <input type="date" id="date">
+
+  <h2>入住天數</h2>
+  <input type="number" id="nights" value="1" min="1">
+
+  <h2>訂房人姓名</h2>
+  <input type="text" id="name" placeholder="請輸入姓名">
+
+  <h2>聯絡電話</h2>
+  <input type="tel" id="phone" placeholder="0912345678">
+
+  <h2>備註（非必填）</h2>
+  <textarea id="note" placeholder="如需加床、嬰兒床請註明"></textarea>
+
+  <button onclick="createOrder()">送出預訂</button>
+
+  <p id="msg" class="message"></p>
+
+</div>
+
+<footer>© 2025 XXX民宿 Booking System</footer>
+
+</body>
+</html>
