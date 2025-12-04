@@ -1,34 +1,54 @@
-/* Google Apps Script 伺服器網址 ★請替換成你自己的★ */
-const API_URL = "https://script.google.com/macros/s/AKfycbzZRykhI3HrwgaAxKoBu1WASRL5KTyBHGuYzEPaUafrVDu9CMaVSx6XOPz5dG1_CPeU/exec";
+/* ===========================================================
+   前端流程控制：JSONP + 事件綁定
+   =========================================================== */
 
-/* =======================
-   JSONP 方式取得資料（避免 CORS 阻擋）
-   ======================= */
-function jsonp(url){
-  return new Promise((resolve,reject)=>{
-    const cb = "cb_" + Date.now();
-    window[cb] = (res)=>{
-      resolve(res);
-      script.remove();
-      delete window[cb];
-    };
-    const script = document.createElement("script");
-    script.src = `${url}&callback=${cb}`;
-    script.onerror = ()=>reject("JSONP 請求失敗");
-    document.body.appendChild(script);
-  });
+/* ------------------------------
+   1️⃣ 載入房型
+   ------------------------------ */
+async function loadRooms() {
+  const roomList = document.getElementById("roomList");
+  roomList.innerHTML = `<div class="loading">載入中...</div>`;
+
+  try {
+    const res = await getRoomsAPI(); // <— 用 JSONP API
+    console.log("房型資料：", res);
+
+    if (!res.success) throw "資料錯誤";
+
+    renderRoomCards(res.rooms);
+
+  } catch (err) {
+    console.error("房型載入失敗", err);
+    roomList.innerHTML = `
+      <div class="error-box">
+        資料載入失敗，請稍後再試
+      </div>`;
+  }
 }
 
-/* =======================
-   取得房型資料
-   ======================= */
-function getRooms(){
-  return jsonp(`${API_URL}?action=rooms`);
+/* ------------------------------
+   2️⃣ 渲染房型卡片
+   ------------------------------ */
+function renderRoomCards(rooms) {
+  const html = rooms.map(r => `
+    <div class="room-card" onclick="selectRoom('${r.room_id}')">
+      <img src="${r.image}" class="room-img">
+      <div class="room-name">${r.name}</div>
+      <div class="room-price">$${r.price}/晚</div>
+    </div>
+  `).join("");
+
+  document.getElementById("roomList").innerHTML = html;
 }
 
-/* =======================
-   取得訂單資料（admin使用）
-   ======================= */
-function getBookings(){
-  return jsonp(`${API_URL}?action=bookings`);
+/* ------------------------------
+   3️⃣ 選房型 → 進入下一頁
+   ------------------------------ */
+function selectRoom(room_id) {
+  window.location.href = `booking-form.html?room_id=${room_id}`;
 }
+
+/* ------------------------------
+   🚀 啟動
+   ------------------------------ */
+document.addEventListener("DOMContentLoaded", loadRooms);
