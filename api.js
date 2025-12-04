@@ -1,54 +1,79 @@
 /* ===========================================================
-   前端流程控制：JSONP + 事件綁定
+   前端 API：GET 使用 JSONP（跨網域保證成功）
+             POST 使用 fetch (JSON)
    =========================================================== */
 
-/* ------------------------------
-   1️⃣ 載入房型
-   ------------------------------ */
-async function loadRooms() {
-  const roomList = document.getElementById("roomList");
-  roomList.innerHTML = `<div class="loading">載入中...</div>`;
+const API_BASE =
+  "https://script.google.com/macros/s/AKfycbzZRykhI3HrwgaAxKoBu1WASRL5KTyBHGuYzEPaUafrVDu9CMaVSx6XOPz5dG1_CPeU/exec";
 
-  try {
-    const res = await getRoomsAPI(); // <— 用 JSONP API
-    console.log("房型資料：", res);
 
-    if (!res.success) throw "資料錯誤";
+/* ===========================================================
+   ⭐ JSONP GET（rooms / availability / bookings）
+   =========================================================== */
+async function apiGet(params = "") {
+  return new Promise((resolve, reject) => {
+    const callback = "cb_" + Date.now();
 
-    renderRoomCards(res.rooms);
+    // 建立 callback
+    window[callback] = function (data) {
+      resolve(data);
+      delete window[callback];
+      script.remove();
+    };
 
-  } catch (err) {
-    console.error("房型載入失敗", err);
-    roomList.innerHTML = `
-      <div class="error-box">
-        資料載入失敗，請稍後再試
-      </div>`;
-  }
+    const script = document.createElement("script");
+    script.src = `${API_BASE}?${params}&callback=${callback}`;
+    script.onerror = reject;
+
+    document.body.appendChild(script);
+  });
 }
 
-/* ------------------------------
-   2️⃣ 渲染房型卡片
-   ------------------------------ */
-function renderRoomCards(rooms) {
-  const html = rooms.map(r => `
-    <div class="room-card" onclick="selectRoom('${r.room_id}')">
-      <img src="${r.image}" class="room-img">
-      <div class="room-name">${r.name}</div>
-      <div class="room-price">$${r.price}/晚</div>
-    </div>
-  `).join("");
 
-  document.getElementById("roomList").innerHTML = html;
+/* ===========================================================
+   ⭐ JSON POST（createBooking / update / delete）
+   =========================================================== */
+async function apiPost(action, body = {}) {
+  const res = await fetch(`${API_BASE}?action=${action}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  return res.json();
 }
 
-/* ------------------------------
-   3️⃣ 選房型 → 進入下一頁
-   ------------------------------ */
-function selectRoom(room_id) {
-  window.location.href = `booking-form.html?room_id=${room_id}`;
+
+/* ===========================================================
+   🚀 封裝成可直接呼叫的 API
+   =========================================================== */
+
+// 取得房型
+function getRoomsAPI() {
+  return apiGet("action=rooms");
 }
 
-/* ------------------------------
-   🚀 啟動
-   ------------------------------ */
-document.addEventListener("DOMContentLoaded", loadRooms);
+// 查詢房況
+function getAvailabilityAPI(date, nights = 1) {
+  return apiGet(`action=availability&date=${date}&nights=${nights}`);
+}
+
+// 取得訂單列表
+function getBookingsAPI() {
+  return apiGet("action=bookings");
+}
+
+// 建立訂單
+function createBookingAPI(data) {
+  return apiPost("createBooking", data);
+}
+
+// 更新訂單
+function updateBookingAPI(data) {
+  return apiPost("updateBooking", data);
+}
+
+// 刪除訂單
+function deleteBookingAPI(order_id) {
+  return apiPost("deleteBooking", { order_id });
+}
