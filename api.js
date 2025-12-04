@@ -1,63 +1,48 @@
 /* ===========================================================
-   api.js － 前端與 GAS 的 API 溝通層（Google Material｜Card Flow）
+   api.js － 專門給 GitHub Pages 用的 JSONP API
+   不用 fetch，不用 CORS，任何網域都可用
    =========================================================== */
 
-/* ---------------------------------------------------------
-   ⭐ STEP 1：設定你的 GAS 部屬網址
-   --------------------------------------------------------- */
+// ★ 把這裡改成你的 GAS Web App URL ★
+const API_BASE = "https://script.google.com/macros/s/AKfycbxtyhpELPybmJwj5lWK7OXa474qryqUiEoWfJaxMjz_iKtYXtEUTgSNbcASAnj6xx2S/exec";
 
-// ⚠️ 請將此網址替換成你的 GAS Deploy URL
-// 例如：https://script.google.com/macros/s/AKxxxxxx/exec
+/* ---------- 共用 JSONP 函式 ---------- */
+function jsonp(params = {}) {
+  return new Promise((resolve, reject) => {
+    const cbName = "cb_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+    params.callback = cbName;
 
-const API_BASE = "https://script.google.com/macros/s/AKfycbzZ71p1sLUUbmEZ7deEjRY1ZkaQnwmJKCaZ3gKwWRtA2P2tGHqNqbJvbLHLVaCfJ7Fe/exec";
+    const query = new URLSearchParams(params).toString();
+    const url   = `${API_BASE}?${query}`;
 
+    const script = document.createElement("script");
+    script.src = url;
 
-/* ---------------------------------------------------------
-   ⭐ STEP 2：統一 GET 請求
-   --------------------------------------------------------- */
-async function apiGet(path) {
-  const url = API_BASE + path;
+    window[cbName] = (res) => {
+      resolve(res);
+      delete window[cbName];
+      script.remove();
+    };
 
-  try {
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      }
-    });
+    script.onerror = () => {
+      reject(new Error("JSONP failed"));
+      delete window[cbName];
+      script.remove();
+    };
 
-    if (!res.ok) throw new Error("HTTP 錯誤：" + res.status);
-
-    return await res.json();
-
-  } catch (err) {
-    console.error("GET API 發生錯誤：", url, err);
-    throw err;
-  }
+    document.body.appendChild(script);
+  });
 }
 
+/* ---------- 封裝實際 API ---------- */
+function apiRooms() {
+  return jsonp({ action: "rooms" });              // 回傳 {success, rooms:[...]}
+}
 
-/* ---------------------------------------------------------
-   ⭐ STEP 3：統一 POST 請求
-   --------------------------------------------------------- */
-async function apiPost(path, data = {}) {
-  const url = API_BASE + path;
+function apiAvailability(date, nights) {
+  return jsonp({ action: "availability", date, nights }); // 回傳 {success, remain:{room_id:數量}}
+}
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data)
-    });
-
-    if (!res.ok) throw new Error("HTTP 錯誤：" + res.status);
-
-    return await res.json();
-
-  } catch (err) {
-    console.error("POST API 發生錯誤：", url, err);
-    throw err;
-  }
+function apiCreateBooking(data) {
+  return jsonp({ action: "createBooking", ...data });     // 回傳 {success, order_id}
 }
