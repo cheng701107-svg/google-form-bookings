@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>  
 <link rel="stylesheet" href="style.css"> 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -256,7 +258,16 @@ document.getElementById("submitBtn").onclick = async () => {
       body: fd
     }).then(r => r.json());
 
-    alert("🎉 預約成功！訂單編號：" + res.orderId);
+    Swal.fire({
+  title: "預約完成！",
+  html: `您的訂單編號：<b>${res.orderId}</b><br>我們已收到您的訂房資訊✔`,
+  icon: "success",
+  confirmButtonText: "確定",
+  confirmButtonColor: "#1a73e8",
+  width: "360px",
+  customClass:{popup:"swal2-border-radius"}
+});
+
 
   } catch (err) {
     console.error(err);
