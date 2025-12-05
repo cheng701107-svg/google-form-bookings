@@ -248,86 +248,77 @@
 
 <script>
 
-/* 假資料（可改成 Google Sheet / API） */
-let bookings = [
-  { id:"B001", name:"王小明", phone:"0912000111", room:"A館包棟", checkin:"2025-12-04", checkout:"2025-12-05", status:"new" },
-  { id:"B002", name:"林美麗", phone:"0988777666", room:"B館包棟", checkin:"2025-12-10", checkout:"2025-12-12", status:"confirmed" },
-  { id:"B003", name:"陳大同", phone:"0922333444", room:"A館包棟", checkin:"2025-12-20", checkout:"2025-12-21", status:"cancelled" }
-];
+/* ❶ 連接 Google Sheet API */
+const API_URL = "https://script.google.com/macros/s/AKfycbyHOU7VmPD80BXHq7SjOD7NthUYHKI1EjtEA_62euGDKi_Jwbzjwu6TUxGKGPR7u3i5/exec";
 
+let bookings = [];
 let editTarget = null;
 
-/* ---------- Render Table ---------- */
-function renderTable() {
-  const tbody = document.getElementById("bookingTable");
-  tbody.innerHTML = "";
-
-  bookings.forEach(b => {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${b.name}</td>
-      <td>${b.room}</td>
-      <td>${b.checkin}</td>
-      <td>${b.checkout}</td>
-      <td><span class="tag ${b.status}">${statusText(b.status)}</span></td>
-
-      <td>
-        <!-- EDIT BUTTON -->
-        <button class="btn-icon" onclick="openEdit('${b.id}')">
-          <span class="material-icons">edit</span>
-        </button>
-
-        <button class="btn-icon" onclick="openDelete('${b.id}')">
-          <span class="material-icons">delete</span>
-        </button>
-      </td>
-    `;
-
-    tbody.appendChild(row);
-  });
-}
-
-function statusText(code) {
-  return {
-    new:"新訂單",
-    confirmed:"已確認",
-    cancelled:"已取消"
-  }[code] || "-";
-}
-
-/* ---------- EDIT MODAL FUNCTIONS ---------- */
-function openEdit(id) {
-  editTarget = bookings.find(b => b.id === id);
-
-  document.getElementById("editName").value = editTarget.name;
-  document.getElementById("editPhone").value = editTarget.phone;
-  document.getElementById("editRoom").value = editTarget.room;
-  document.getElementById("editCheckin").value = editTarget.checkin;
-  document.getElementById("editCheckout").value = editTarget.checkout;
-  document.getElementById("editStatus").value = editTarget.status;
-
-  document.getElementById("editModalBg").style.display = "flex";
-}
-
-function closeEdit() {
-  document.getElementById("editModalBg").style.display = "none";
-}
-
-function saveEdit() {
-  editTarget.name = document.getElementById("editName").value;
-  editTarget.phone = document.getElementById("editPhone").value;
-  editTarget.room = document.getElementById("editRoom").value;
-  editTarget.checkin = document.getElementById("editCheckin").value;
-  editTarget.checkout = document.getElementById("editCheckout").value;
-  editTarget.status = document.getElementById("editStatus").value;
-
-  closeEdit();
+/* ❷ 讀取 Google Sheet */
+async function loadData(){
+  const res = await fetch(API_URL);
+  bookings = await res.json();
   renderTable();
 }
 
-/* ---------- Initialize ---------- */
-renderTable();
+/* ❸ 渲染表格 */
+function renderTable(){
+  const tbody = document.getElementById("bookingTable");
+  tbody.innerHTML = "";
+
+  bookings.forEach(b=>{
+    tbody.innerHTML += `
+    <tr>
+      <td>${b.orderId}</td>
+      <td>${b.name}</td>
+      <td>${b.phone}</td>
+      <td>${b.email}</td>
+      <td>${b.room}</td>
+      <td>${b.checkin}</td>
+      <td>${b.checkout}</td>
+      <td>${b.nights}</td>
+      <td>${b.adult}</td>
+      <td>${b.child}</td>
+      <td>${b.pet}</td>
+      <td>${b.note}</td>
+      <td><span class="tag ${b.status || "new"}">${statusText(b.status)}</span></td>
+      <td>
+        <button class="btn-icon" onclick="openEdit('${b.orderId}')"><span class="material-icons">edit</span></button>
+        <button class="btn-icon" onclick="openDelete('${b.orderId}')"><span class="material-icons">delete</span></button>
+      </td>
+    </tr>`;
+  });
+}
+
+/* ❹ Status 顯示 */
+function statusText(s){
+  return { new:"新訂單",confirmed:"已確認",cancelled:"已取消" }[s] || "新訂單";
+}
+
+/* ❺ 編輯視窗──填入資料 */
+function openEdit(id){
+  editTarget = bookings.find(b=>b.orderId===id);
+
+  editName.value = editTarget.name;
+  editPhone.value = editTarget.phone;
+  editEmail.value = editTarget.email;
+  editRoom.value = editTarget.room;
+  editCheckin.value = editTarget.checkin;
+  editCheckout.value = editTarget.checkout;
+  editNights.value = editTarget.nights;
+  editAdult.value = editTarget.adult;
+  editChild.value = editTarget.child;
+  editPet.value = editTarget.pet;
+  editNote.value = editTarget.note;
+  editStatus.value = editTarget.status || "new";
+
+  document.getElementById("editModalBg").style.display="flex";
+}
+function closeEdit(){ document.getElementById("editModalBg").style.display="none"; }
+
+/* ❻ 初始化 */
+loadData();
+
 
 </script>
 
