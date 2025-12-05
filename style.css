@@ -1,0 +1,69 @@
+/* =============================
+   🔥 GLOBAL RESPONSIVE UI SYSTEM
+   （整站 RWD 主樣式）
+============================= */
+
+:root {
+  --pc-width:660px;
+  --pad-width:92%;
+  --phone-width:96%;
+}
+
+/* 基礎設計 */
+body{
+  font-family:"Noto Sans TC",sans-serif;
+  background:#f7f7f7;
+  margin:0;
+  padding:0;
+}
+
+/* 🔥 全站統一容器 */
+.page-container{
+  width:100%;
+  max-width:var(--pc-width);
+  margin:auto;
+  padding:26px 16px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* 🔥 全資料模組統一 RWD 寬度 */
+.info-box,
+form,
+.btn,
+.room-card,
+.calendar-box,
+.night-row {
+  width:100%;
+  max-width:var(--pc-width);
+  margin:0 auto 22px;
+  box-sizing:border-box;
+}
+
+/* 📱 平板 RWD */
+@media (max-width:768px){
+  .page-container,
+  .info-box,
+  form,
+  .btn,
+  .room-card,
+  .calendar-box,
+  .night-row{
+    max-width:var(--pad-width);
+  }
+}
+
+/* 📱 手機最佳排版 */
+@media (max-width:480px){
+  .page-container,
+  .info-box,
+  form,
+  .btn,
+  .room-card,
+  .calendar-box,
+  .night-row{
+    max-width:var(--phone-width);
+  }
+}
